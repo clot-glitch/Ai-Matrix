@@ -1,242 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Matrix — Green Neural Chat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:#0a0f0a; --bg2:#0c120c; --matrix:#00ff95; --matrix2:#00e676; --text:#e6ffe6; --muted:#9bd4a8;
-      --card: rgba(0, 255, 149, 0.06);
-    }
-    * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<title>MATRIX — AI Chatbot</title>
+<style>
     body {
-      margin:0; color:var(--text); font-family:Inter, system-ui;
-      background: radial-gradient(circle at 20% 10%, #0a0f0a 0%, #0c120c 40%, #071307 100%);
-      overflow: hidden; /* canvas covers bg */
+        background: black;
+        color: #00FF41;
+        font-family: "Courier New", monospace;
+        margin: 0;
+        padding: 0;
+    }
+    #chatbox {
+        width: 90%;
+        height: 75vh;
+        margin: 20px auto;
+        padding: 10px;
+        background: rgba(0, 40, 0, 0.7);
+        border: 1px solid #00FF41;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+    }
+    #input {
+        width: 90%;
+        margin: 0 auto 20px auto;
+        padding: 14px;
+        background: black;
+        color: #00FF41;
+        border: 1px solid #00FF41;
+        font-size: 18px;
+        outline: none;
+    }
+    .title {
+        text-align:center;
+        margin-top:15px;
+        font-size:28px;
+        color:#00FF41;
+        text-shadow:0 0 10px #00FF41;
+    }
+</style>
+
+<script type="module">
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers/dist/transformers.min.js";
+
+let generator = null;
+
+// LOAD MODEL FROM CDN
+async function loadModel() {
+    appendMessage("SYSTEM", "Booting MATRIX...");
+    appendMessage("SYSTEM", "Loading model from CDN...");
+    generator = await pipeline(
+        "text-generation",
+        "Xenova/Qwen2.5-1.5B-Instruct",   // FREE & CDN hosted
+        { dtype: "q4", device: "webgpu" }
+    );
+    appendMessage("SYSTEM", "MATRIX Online.");
+}
+loadModel();
+
+function appendMessage(sender, text) {
+    const box = document.getElementById("chatbox");
+    box.innerHTML += `\n<b>${sender}:</b> ${text}`;
+    box.scrollTop = box.scrollHeight;
+}
+
+window.sendMessage = async function() {
+    const inp = document.getElementById("input");
+    let text = inp.value.trim();
+    if (!text) return;
+    appendMessage("YOU", text);
+    inp.value = "";
+
+    if (!generator) {
+        appendMessage("MATRIX", "Model still loading...");
+        return;
     }
 
-    /* Matrix digital rain canvas */
-    #matrixCanvas { position: fixed; inset: 0; z-index: 0; background: #000; opacity: 0.9; }
-    .glowOverlay {
-      position: fixed; inset: 0; z-index: 1;
-      background:
-        radial-gradient(600px 300px at 20% 10%, rgba(0, 255, 149, 0.08), transparent 60%),
-        radial-gradient(600px 300px at 80% 10%, rgba(0, 230, 118, 0.06), transparent 60%);
-      pointer-events: none;
-    }
+    const out = await generator(text, {
+        max_new_tokens: 200,
+        temperature: 0.7
+    });
 
-    /* Header with rising logo */
-    header { position: relative; z-index: 2; height: 220px; overflow: hidden; }
-    .ocean { position:absolute; bottom:0; width:100%; height:100px; overflow:hidden; opacity: 0.12; }
-    .wave {
-      position:absolute; width:200%; height:100%;
-      background: linear-gradient(to right, rgba(0,255,149,0.3), rgba(0,230,118,0.2));
-      filter: blur(14px);
-      animation: waveMove 10s linear infinite;
-    }
-    .wave:nth-child(2){opacity:0.6;animation-duration:14s;}
-    @keyframes waveMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-
-    .logo {
-      position:absolute; bottom:-80px; left:50%; transform:translateX(-50%);
-      display:flex; align-items:center; gap:14px; animation: riseUp 2.6s ease-out forwards;
-    }
-    .badge {
-      width:62px; height:62px; border-radius:12px;
-      background: linear-gradient(135deg, var(--matrix), var(--matrix2));
-      box-shadow: 0 0 24px rgba(0,255,149,0.6);
-    }
-    .logo h1 {
-      font-family:"Share Tech Mono", monospace;
-      font-size:48px; letter-spacing:2px;
-      text-shadow: 0 0 12px rgba(0,255,149,0.7);
-    }
-    @keyframes riseUp { 0%{bottom:-80px;opacity:0} 60%{bottom:40px;opacity:1} 80%{bottom:32px} 100%{bottom:40px} }
-
-    /* Shell and panels */
-    .shell { position: relative; z-index: 2; max-width: 960px; margin: 0 auto; padding: 16px; }
-    .panel {
-      background: var(--card);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0,255,149,0.22);
-      border-radius: 16px;
-      box-shadow: 0 12px 40px rgba(0, 255, 149, 0.12);
-    }
-
-    /* Controls */
-    .controls { display:flex; gap:10px; flex-wrap:wrap; margin: 8px 0 12px; }
-    select, button {
-      padding:10px 12px; border-radius:12px; border:1px solid rgba(0,255,149,0.25);
-      background: rgba(0, 255, 149, 0.08); color: var(--text);
-      font-family:"Share Tech Mono", monospace;
-    }
-    button.primary {
-      background: linear-gradient(135deg, var(--matrix), var(--matrix2)); color:#061306; font-weight:700;
-      box-shadow: 0 0 16px rgba(0,255,149,0.35);
-    }
-    button:hover { box-shadow: 0 0 18px rgba(0,255,149,0.45); transform: translateY(-1px); transition: 0.2s ease; }
-
-    /* Chat area */
-    .chat { height: 56vh; overflow-y:auto; padding: 12px; }
-    .msg { margin: 8px 0; display:flex; gap:10px; }
-    .bubble {
-      padding:12px 14px; border-radius:14px; border:1px solid rgba(0,255,149,0.25);
-      max-width: 80%; white-space: pre-wrap; line-height: 1.35;
-      background: rgba(0, 255, 149, 0.06);
-      font-family:"Share Tech Mono", monospace;
-      text-shadow: 0 0 6px rgba(0,255,149,0.2);
-    }
-    .msg.user .bubble { background: rgba(0, 255, 149, 0.10); border-color: rgba(0,255,149,0.35); }
-    .msg.assistant .bubble { background: rgba(0, 230, 118, 0.10); border-color: rgba(0,255,149,0.35); }
-
-    /* Composer */
-    .composer { display:flex; gap:10px; padding: 12px; border-top:1px solid rgba(0,255,149,0.15); }
-    textarea {
-      flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,255,149,0.25);
-      background: rgba(0, 255, 149, 0.06); color: var(--text);
-      font-family:"Share Tech Mono", monospace;
-    }
-
-    /* Footer meta */
-    .meta { color: var(--muted); font-size: 12px; padding: 8px 12px; }
-
-    /* Mobile tweaks */
-    @media (max-width: 600px) {
-      .logo h1 { font-size: 36px; }
-      .chat { height: 58vh; }
-    }
-  </style>
+    appendMessage("MATRIX", out[0].generated_text);
+};
+</script>
 </head>
+
 <body>
-  <canvas id="matrixCanvas"></canvas>
-  <div class="glowOverlay"></div>
-
-  <header>
-    <div class="ocean"><div class="wave"></div><div class="wave"></div></div>
-    <div class="logo">
-      <div class="badge" aria-hidden="true"></div>
-      <h1>Matrix</h1>
-    </div>
-  </header>
-
-  <main class="shell">
-    <section class="panel">
-      <div class="controls" style="padding:12px;">
-        <select id="persona">
-          <option value="concise">Concise</option>
-          <option value="teacher">Tutor</option>
-          <option value="coder">Coding assistant</option>
-          <option value="creative">Creative writer</option>
-          <option value="support">Support bot</option>
-        </select>
-        <button id="newChat">New chat</button>
-        <button id="export">Export chat</button>
-      </div>
-      <div id="chat" class="chat" aria-live="polite"></div>
-      <div class="composer">
-        <textarea id="input" rows="2" placeholder="Type to enter the Matrix…"></textarea>
-        <button id="send" class="primary">Send</button>
-      </div>
-      <div class="meta">
-        <span id="summary">Session summary will appear here.</span>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    // Matrix digital rain
-    const canvas = document.getElementById('matrixCanvas');
-    const ctx = canvas.getContext('2d');
-    let width, height, columns, drops, fontSize;
-
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-      fontSize = Math.max(14, Math.floor(height / 45));
-      columns = Math.floor(width / fontSize);
-      drops = Array(columns).fill(1);
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    const chars = "01□◇△▽※░▒▓█ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    function rain() {
-      ctx.fillStyle = "rgba(0,0,0,0.08)";
-      ctx.fillRect(0, 0, width, height);
-      ctx.fillStyle = "#00ff95";
-      ctx.font = fontSize + "px Share Tech Mono";
-      for (let i = 0; i < drops.length; i++) {
-        const text = chars.charAt(Math.floor(Math.random() * chars.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-      requestAnimationFrame(rain);
-    }
-    rain();
-
-    // Chat logic (frontend-only; replace fetch with backend when you have one)
-    const chatEl = document.getElementById('chat');
-    const inputEl = document.getElementById('input');
-    const personaEl = document.getElementById('persona');
-    const summaryEl = document.getElementById('summary');
-
-    let messages = [];
-    let sessionSummary = "";
-
-    function addMessage(role, content) {
-      messages.push({ role, content, ts: Date.now() });
-      const wrap = document.createElement('div');
-      wrap.className = `msg ${role}`;
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      bubble.textContent = content;
-      wrap.appendChild(bubble);
-      chatEl.appendChild(wrap);
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
-
-    function addStreamingMessage(role) {
-      const wrap = document.createElement('div');
-      wrap.className = `msg ${role}`;
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      wrap.appendChild(bubble);
-      chatEl.appendChild(wrap);
-      chatEl.scrollTop = chatEl.scrollHeight;
-      return {
-        append(chunk){ bubble.textContent += chunk; chatEl.scrollTop = chatEl.scrollHeight; },
-        done(){ /* no-op */ }
-      };
-    }
-
-    // Local mock generator (no API key). Replace with backend fetch later.
-    function localReply(userText) {
-      const p = personaEl.value;
-      const prefix = p === "coder" ? "Code insight: "
-                  : p === "teacher" ? "Tutor note: "
-                  : p === "creative" ? "Story spark: "
-                  : p === "support" ? "Support reply: "
-                  : "";
-      const hints = [
-        "Let’s clarify your goal in one sentence.",
-        "Here’s a compact plan with three steps.",
-        "Edge cases matter—want me to list them?",
-        "Prefer code, concepts, or examples?"
-      ];
-      return `${prefix}${hints[Math.floor(Math.random()*hints.length)]}\n\nYou said: “${userText}”.`;
-    }
-
-    async function sendMessage() {
-      const text = inputEl.value.trim();
-      if (!text) return;
-      addMessage('user', text);
-      inputEl.value = '';
-
-      const stream = addStreamingMessage('assistant');
-
-      // Simulate streaming locally (no backend required)
-      const full = localReply(text);
-      const chunks = full.match(/.{
+<h2 class="title">M A T R I X — AI Chatbot</h2>
+<div id="chatbox"></div>
+<input id="input" placeholder="Speak to MATRIX…" 
+       onkeydown="if(event.key==='Enter')sendMessage()">
+</body>
+</html>
