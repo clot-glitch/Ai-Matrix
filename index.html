@@ -1,540 +1,242 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Daot AI — Matrix Coder (Single File)</title>
-  <meta name="description" content="Single-file Matrix-themed AI + in-browser TF model using cancer.csv">
-  <!-- TensorFlow.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-  <!-- PapaParse for CSV parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <title>Matrix — Green Neural Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0b0f06;
-      --matrix-green:#00ff77;
-      --panel:#071009;
-      --muted:#8affb3;
-      --glass: rgba(0,255,119,0.04);
+    :root {
+      --bg:#0a0f0a; --bg2:#0c120c; --matrix:#00ff95; --matrix2:#00e676; --text:#e6ffe6; --muted:#9bd4a8;
+      --card: rgba(0, 255, 149, 0.06);
     }
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#001103,#020a03);color:var(--muted)}
-    .app{max-width:1200px;margin:18px auto;padding:18px;position:relative;z-index:2}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    h1{color:var(--matrix-green);margin:0;font-size:20px}
-    .subtitle{color:#aef3bf;font-size:12px}
-    main{display:grid;grid-template-columns:1fr 420px;gap:14px}
-    .panel{background:linear-gradient(180deg,rgba(0,0,0,0.28),rgba(0,0,0,0.45));border:1px solid var(--glass);padding:12px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
-    .left{min-height:640px}
-    .chat{height:250px;overflow:auto;padding:8px; border-radius:6px;background:#001205;border:1px solid rgba(0,255,119,0.03)}
-    .msg{margin:8px 0;padding:8px;border-radius:6px}
-    .msg.user{background:linear-gradient(90deg, rgba(0,255,119,0.05), transparent);align-self:flex-end;color:#eaffef;border:1px solid rgba(0,255,119,0.06)}
-    .msg.ai{background:transparent;border:1px dashed rgba(0,255,119,0.03);color:#cff7df}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .controls input[type="text"], .controls input[type="number"], .controls select{background:#021105;border:1px solid rgba(0,255,119,0.03);color:var(--muted);padding:8px;border-radius:6px}
-    .btn{background:transparent;border:1px solid rgba(0,255,119,0.08);color:var(--muted);padding:8px 10px;border-radius:6px;cursor:pointer}
-    .file-meta{font-size:12px;color:#9ff7c8;margin-top:6px}
-    .section{margin-top:12px}
-    .grid-row{display:flex;gap:8px}
-    .small{font-size:13px;color:#bfffcf}
-    .editor{height:220px;background:#021105;border-radius:6px;padding:8px;overflow:auto;font-family:ui-monospace,monospace;font-size:13px;color:#ecffed}
-    pre.code{white-space:pre-wrap;word-break:break-word}
-    .right .panel{height:100%}
-    .stat{display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;background:rgba(0,0,0,0.18);margin-bottom:6px;color:#dfffe5}
-    .progress{height:10px;background:#001803;border-radius:6px;overflow:hidden;margin-top:6px}
-    .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--matrix-green),#8fffb3)}
-    footer{margin-top:12px;color:#9efcc8;font-size:12px;text-align:center}
-    /* responsive */
-    @media (max-width:980px){
-      main{grid-template-columns:1fr; }
-      .right{order:2}
+    * { box-sizing: border-box; }
+    body {
+      margin:0; color:var(--text); font-family:Inter, system-ui;
+      background: radial-gradient(circle at 20% 10%, #0a0f0a 0%, #0c120c 40%, #071307 100%);
+      overflow: hidden; /* canvas covers bg */
+    }
+
+    /* Matrix digital rain canvas */
+    #matrixCanvas { position: fixed; inset: 0; z-index: 0; background: #000; opacity: 0.9; }
+    .glowOverlay {
+      position: fixed; inset: 0; z-index: 1;
+      background:
+        radial-gradient(600px 300px at 20% 10%, rgba(0, 255, 149, 0.08), transparent 60%),
+        radial-gradient(600px 300px at 80% 10%, rgba(0, 230, 118, 0.06), transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Header with rising logo */
+    header { position: relative; z-index: 2; height: 220px; overflow: hidden; }
+    .ocean { position:absolute; bottom:0; width:100%; height:100px; overflow:hidden; opacity: 0.12; }
+    .wave {
+      position:absolute; width:200%; height:100%;
+      background: linear-gradient(to right, rgba(0,255,149,0.3), rgba(0,230,118,0.2));
+      filter: blur(14px);
+      animation: waveMove 10s linear infinite;
+    }
+    .wave:nth-child(2){opacity:0.6;animation-duration:14s;}
+    @keyframes waveMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    .logo {
+      position:absolute; bottom:-80px; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:14px; animation: riseUp 2.6s ease-out forwards;
+    }
+    .badge {
+      width:62px; height:62px; border-radius:12px;
+      background: linear-gradient(135deg, var(--matrix), var(--matrix2));
+      box-shadow: 0 0 24px rgba(0,255,149,0.6);
+    }
+    .logo h1 {
+      font-family:"Share Tech Mono", monospace;
+      font-size:48px; letter-spacing:2px;
+      text-shadow: 0 0 12px rgba(0,255,149,0.7);
+    }
+    @keyframes riseUp { 0%{bottom:-80px;opacity:0} 60%{bottom:40px;opacity:1} 80%{bottom:32px} 100%{bottom:40px} }
+
+    /* Shell and panels */
+    .shell { position: relative; z-index: 2; max-width: 960px; margin: 0 auto; padding: 16px; }
+    .panel {
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,255,149,0.22);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 255, 149, 0.12);
+    }
+
+    /* Controls */
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin: 8px 0 12px; }
+    select, button {
+      padding:10px 12px; border-radius:12px; border:1px solid rgba(0,255,149,0.25);
+      background: rgba(0, 255, 149, 0.08); color: var(--text);
+      font-family:"Share Tech Mono", monospace;
+    }
+    button.primary {
+      background: linear-gradient(135deg, var(--matrix), var(--matrix2)); color:#061306; font-weight:700;
+      box-shadow: 0 0 16px rgba(0,255,149,0.35);
+    }
+    button:hover { box-shadow: 0 0 18px rgba(0,255,149,0.45); transform: translateY(-1px); transition: 0.2s ease; }
+
+    /* Chat area */
+    .chat { height: 56vh; overflow-y:auto; padding: 12px; }
+    .msg { margin: 8px 0; display:flex; gap:10px; }
+    .bubble {
+      padding:12px 14px; border-radius:14px; border:1px solid rgba(0,255,149,0.25);
+      max-width: 80%; white-space: pre-wrap; line-height: 1.35;
+      background: rgba(0, 255, 149, 0.06);
+      font-family:"Share Tech Mono", monospace;
+      text-shadow: 0 0 6px rgba(0,255,149,0.2);
+    }
+    .msg.user .bubble { background: rgba(0, 255, 149, 0.10); border-color: rgba(0,255,149,0.35); }
+    .msg.assistant .bubble { background: rgba(0, 230, 118, 0.10); border-color: rgba(0,255,149,0.35); }
+
+    /* Composer */
+    .composer { display:flex; gap:10px; padding: 12px; border-top:1px solid rgba(0,255,149,0.15); }
+    textarea {
+      flex:1; padding:12px; border-radius:12px; border:1px solid rgba(0,255,149,0.25);
+      background: rgba(0, 255, 149, 0.06); color: var(--text);
+      font-family:"Share Tech Mono", monospace;
+    }
+
+    /* Footer meta */
+    .meta { color: var(--muted); font-size: 12px; padding: 8px 12px; }
+
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      .logo h1 { font-size: 36px; }
+      .chat { height: 58vh; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div>
-        <h1>Daot AI — Matrix Coder</h1>
-        <div class="subtitle">Single-file demo • Matrix-green • trains a TF.js cancer classifier on your <code>/mnt/data/cancer.csv</code></div>
+  <canvas id="matrixCanvas"></canvas>
+  <div class="glowOverlay"></div>
+
+  <header>
+    <div class="ocean"><div class="wave"></div><div class="wave"></div></div>
+    <div class="logo">
+      <div class="badge" aria-hidden="true"></div>
+      <h1>Matrix</h1>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <div class="controls" style="padding:12px;">
+        <select id="persona">
+          <option value="concise">Concise</option>
+          <option value="teacher">Tutor</option>
+          <option value="coder">Coding assistant</option>
+          <option value="creative">Creative writer</option>
+          <option value="support">Support bot</option>
+        </select>
+        <button id="newChat">New chat</button>
+        <button id="export">Export chat</button>
       </div>
-      <div style="text-align:right">
-        <div class="small">Dataset path baked into file:</div>
-        <div style="color:var(--matrix-green);font-weight:600">/mnt/data/cancer.csv</div>
+      <div id="chat" class="chat" aria-live="polite"></div>
+      <div class="composer">
+        <textarea id="input" rows="2" placeholder="Type to enter the Matrix…"></textarea>
+        <button id="send" class="primary">Send</button>
       </div>
-    </header>
-
-    <main>
-      <div class="left panel">
-        <div class="chat" id="chat">
-          <div class="msg ai"><b>Daot AI</b>: Welcome. Click <i>Load CSV</i> then <i>Train Model</i> to start. Use the chat box to ask for dataset summaries or code help.</div>
-        </div>
-
-        <div class="section">
-          <div style="display:flex;gap:8px">
-            <input id="datasetUrl" type="text" value="/mnt/data/cancer.csv" style="flex:1" />
-            <button id="loadCsvBtn" class="btn">Load CSV</button>
-            <button id="trainBtn" class="btn">Train Model</button>
-          </div>
-          <div class="file-meta" id="fileMeta">No dataset loaded.</div>
-        </div>
-
-        <div class="section grid-row">
-          <div style="flex:1">
-            <div class="stat"><span>Rows</span><span id="rows">—</span></div>
-            <div class="stat"><span>Numeric features</span><span id="numFeatures">—</span></div>
-            <div class="stat"><span>Target</span><span id="targetCol">—</span></div>
-          </div>
-          <div style="width:220px">
-            <div class="small">Training options</div>
-            <div style="display:flex;gap:8px;margin-top:6px">
-              <input id="epochs" type="number" value="40" min="1" style="width:80px" />
-              <input id="batch" type="number" value="16" min="1" style="width:110px" />
-            </div>
-            <div style="margin-top:8px">
-              <label class="small">Learning rate</label>
-              <input id="lr" type="number" value="0.001" step="0.0005" style="width:120px" />
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="small">Training logs</div>
-          <div id="trainLogs" class="editor" style="height:140px;overflow:auto"></div>
-          <div class="progress"><i id="trainProgress"></i></div>
-        </div>
-
-        <div class="section">
-          <div class="small">Prediction</div>
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <input id="predictIndex" type="number" value="0" style="flex:1" />
-            <button id="predictBtn" class="btn">Predict Row</button>
-            <button id="predictCsvBtn" class="btn">Predict CSV Sample</button>
-          </div>
-          <div style="margin-top:8px" id="predictResult">Prediction: —</div>
-        </div>
-
-        <div class="section">
-          <div class="small">Chat / Code helper</div>
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <input id="userMsg" type="text" placeholder="Ask: explain dataset, show EDA, or paste JS to analyze" style="flex:1" />
-            <button id="sendMsg" class="btn">Send</button>
-          </div>
-          <div style="margin-top:8px">
-            <div class="small">JS Runner (sandbox)</div>
-            <div contenteditable id="codeBox" class="editor" style="height:120px">// paste JS and press Run</div>
-            <div style="display:flex;gap:8px;margin-top:6px">
-              <button id="runJs" class="btn">Run JS</button>
-              <button id="explainJs" class="btn">Explain JS</button>
-            </div>
-            <pre id="jsOutput" class="editor" style="height:80px"></pre>
-          </div>
-        </div>
+      <div class="meta">
+        <span id="summary">Session summary will appear here.</span>
       </div>
+    </section>
+  </main>
 
-      <div class="right">
-        <div class="panel">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700;color:var(--matrix-green)">Model & EDA</div>
-            <div class="small">Client-side (tfjs)</div>
-          </div>
+  <script>
+    // Matrix digital rain
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, columns, drops, fontSize;
 
-          <div style="margin-top:10px">
-            <div class="small">Model status</div>
-            <div id="modelStatus" style="margin-top:6px;color:#dfffe5">No model loaded</div>
-
-            <div style="margin-top:10px">
-              <div class="small">Metrics</div>
-              <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
-                <div class="stat"><span>Last loss</span><span id="lastLoss">—</span></div>
-                <div class="stat"><span>Last acc</span><span id="lastAcc">—</span></div>
-              </div>
-            </div>
-
-            <div style="margin-top:10px">
-              <div class="small">Actions</div>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <button id="saveModelBtn" class="btn">Save Model (IndexedDB)</button>
-                <button id="loadModelBtn" class="btn">Load Model</button>
-                <button id="clearModelBtn" class="btn">Clear Model</button>
-              </div>
-              <div style="margin-top:6px" class="small">Saved model name: <code>daot_cancer_model</code></div>
-            </div>
-
-            <div style="margin-top:12px">
-              <div class="small">Quick EDA summary</div>
-              <pre id="edaOutput" class="editor" style="height:220px;overflow:auto;margin-top:6px">No EDA yet.</pre>
-            </div>
-          </div>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <div class="panel">
-          <div style="font-weight:700;color:var(--matrix-green)">Notes & Tips</div>
-          <div class="small" style="margin-top:8px;line-height:1.4">
-            • Upload <code>cancer.csv</code> to the same folder as this page on GitHub so the default path <code>/mnt/data/cancer.csv</code> works.<br>
-            • The page trains a small binary classifier. If your target column is named <code>diagnosis</code> the script will attempt to encode it; otherwise the last column is used.<br>
-            • This is a demo — for production use a server, model validation, and secure sandbox are required.
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <footer>Built for experimentation — change the dataset URL if needed. Happy testing!</footer>
-  </div>
-
-<script>
-/* Single-file Daot AI: in-browser CSV -> TF.js training + simple chat/code helper
-   Default dataset URL: /mnt/data/cancer.csv (replace or upload csv to same location on GitHub)
-*/
-
-/* ---------- Utilities ---------- */
-function logChat(text, who='ai'){
-  const chat = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = 'msg ' + (who==='user' ? 'user':'ai');
-  el.innerHTML = text;
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
-}
-function setText(id, txt){ const e=document.getElementById(id); if(e) e.textContent = txt; }
-function appendLog(txt){ const el = document.getElementById('trainLogs'); el.textContent += txt + '\\n'; el.scrollTop = el.scrollHeight; }
-
-/* ---------- Globals ---------- */
-let rawData = null;
-let features = null;
-let labels = null;
-let featureNames = [];
-let targetName = null;
-let model = null;
-let lastMetrics = {loss:'—', acc:'—'};
-
-/* ---------- CSV Loading & Parsing ---------- */
-document.getElementById('loadCsvBtn').addEventListener('click', async ()=>{
-  const url = document.getElementById('datasetUrl').value.trim() || '/mnt/data/cancer.csv';
-  logChat(`<b>Loading CSV</b>: ${url}`, 'user');
-  appendLog('Fetching CSV...');
-  try{
-    const resp = await fetch(url);
-    if(!resp.ok) { appendLog('CSV fetch failed with ' + resp.status); logChat('Failed to fetch CSV: ' + resp.statusText); return; }
-    const txt = await resp.text();
-    const parsed = Papa.parse(txt, {header:true, dynamicTyping:true, skipEmptyLines:true});
-    rawData = parsed.data;
-    appendLog('Parsed CSV rows: ' + rawData.length);
-    document.getElementById('fileMeta').textContent = parsed.meta.fields ? 'Columns: ' + parsed.meta.fields.join(', ') : '';
-    setText('rows', String(rawData.length));
-    detectFeaturesAndTarget(parsed.meta.fields);
-    computeEDA();
-    logChat('CSV loaded. Found ' + (featureNames.length) + ' numeric features.', 'ai');
-  }catch(err){
-    appendLog('CSV load error: ' + err);
-    logChat('Error loading CSV: ' + String(err));
-  }
-});
-
-function detectFeaturesAndTarget(fields){
-  // Prefer 'diagnosis' or 'target', else use last column as target
-  if(!fields || fields.length===0){ featureNames=[]; targetName=null; setText('numFeatures','0'); setText('targetCol','—'); return; }
-  let t = null;
-  if(fields.includes('diagnosis')) t='diagnosis';
-  else if(fields.includes('target')) t='target';
-  else t = fields[fields.length - 1];
-  targetName = t;
-  featureNames = fields.filter(f => f !== t);
-  // But keep only numeric features — detect by inspecting the first 10 rows
-  const numeric = [];
-  for(const fn of featureNames){
-    let ok = true;
-    for(let i=0;i<Math.min(10, rawData.length); i++){
-      const v = rawData[i][fn];
-      if(v === null || v === undefined) continue;
-      if(typeof v !== 'number') { ok = false; break; }
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      fontSize = Math.max(14, Math.floor(height / 45));
+      columns = Math.floor(width / fontSize);
+      drops = Array(columns).fill(1);
     }
-    if(ok) numeric.push(fn);
-  }
-  featureNames = numeric;
-  setText('numFeatures', String(featureNames.length));
-  setText('targetCol', targetName || '—');
-}
+    window.addEventListener('resize', resize);
+    resize();
 
-/* ---------- EDA ---------- */
-function computeEDA(){
-  if(!rawData) return;
-  const n = rawData.length;
-  const out = [];
-  out.push('Rows: ' + n);
-  out.push('Target column: ' + String(targetName));
-  if(featureNames.length===0) { document.getElementById('edaOutput').textContent = out.join('\\n'); return; }
-  // compute basic stats for top 6 features
-  const sampleFeatures = featureNames.slice(0, Math.min(6, featureNames.length));
-  for(const fn of sampleFeatures){
-    const vals = rawData.map(r => Number(r[fn])).filter(v => !isNaN(v));
-    const mean = (vals.reduce((a,b)=>a+b,0))/vals.length;
-    const min = Math.min(...vals); const max = Math.max(...vals);
-    out.push(`${fn}: n=${vals.length}, mean=${mean.toFixed(3)}, min=${min.toFixed(3)}, max=${max.toFixed(3)}`);
-  }
-  document.getElementById('edaOutput').textContent = out.join('\\n');
-}
-
-/* ---------- Prepare Tensors ---------- */
-function prepareTensors(){
-  if(!rawData) throw new Error('No data loaded');
-  const X = [];
-  const y = [];
-  for(const row of rawData){
-    // gather numeric features
-    const vals = featureNames.map(f => {
-      const v = row[f];
-      return (v == null || v === '') ? NaN : Number(v);
-    });
-    if(vals.some(v => isNaN(v))) continue;
-    X.push(vals);
-    let labelRaw = row[targetName];
-    if(typeof labelRaw === 'string') labelRaw = labelRaw.trim();
-    // binary encode: if value in {'M','1','malignant','mal'} treat as 1
-    let lab = 0;
-    if(typeof labelRaw === 'number') lab = (labelRaw !== 0) ? 1 : 0;
-    else {
-      const s = String(labelRaw).toLowerCase();
-      if(['m','malignant','1','true','yes','y'].includes(s)) lab = 1;
-      else lab = 0;
-    }
-    y.push(lab);
-  }
-  if(X.length===0) throw new Error('No numeric rows found after cleaning');
-  // convert to tensors and normalize (standardization)
-  const Xtensor = tf.tensor2d(X);
-  const ytensor = tf.tensor2d(y, [y.length, 1]);
-  const {mean, variance} = tf.moments(Xtensor, 0);
-  const std = variance.sqrt();
-  // avoid zero std
-  const stdSafe = tf.maximum(std, 1e-6);
-  const Xnorm = Xtensor.sub(mean).div(stdSafe);
-  // store stats for later
-  const stats = {mean: mean.arraySync(), std: stdSafe.arraySync()};
-  return {X: Xnorm, y: ytensor, stats};
-}
-
-/* ---------- Train Model ---------- */
-document.getElementById('trainBtn').addEventListener('click', async ()=>{
-  if(!rawData){ logChat('Load a CSV first.', 'ai'); return; }
-  appendLog('Preparing tensors...');
-  try{
-    const {X, y, stats} = prepareTensors();
-    appendLog('Tensors ready: ' + X.shape);
-    const inputDim = X.shape[1];
-    const epochs = Number(document.getElementById('epochs').value) || 20;
-    const batch = Number(document.getElementById('batch').value) || 16;
-    const lr = Number(document.getElementById('lr').value) || 0.001;
-    appendLog('Building model...');
-    model = tf.sequential();
-    model.add(tf.layers.dense({units:128, activation:'relu', inputShape:[inputDim]}));
-    model.add(tf.layers.dropout({rate:0.2}));
-    model.add(tf.layers.dense({units:64, activation:'relu'}));
-    model.add(tf.layers.dense({units:1, activation:'sigmoid'}));
-    const optimizer = tf.train.adam(lr);
-    model.compile({optimizer, loss:'binaryCrossentropy', metrics:['accuracy']});
-    setText('modelStatus', 'Training...');
-    appendLog('Starting training: epochs=' + epochs + ' batch=' + batch + ' lr=' + lr);
-    // Train with onBatchEnd and onEpochEnd callbacks
-    let lastLoss=0, lastAcc=0;
-    await model.fit(X, y, {
-      epochs,
-      batchSize: batch,
-      shuffle: true,
-      validationSplit: 0.15,
-      callbacks: {
-        onEpochEnd: async (epoch, logs) => {
-          lastLoss = logs.loss.toFixed(4);
-          lastAcc = (logs.acc || logs.accuracy || 0).toFixed(4);
-          setText('lastLoss', lastLoss);
-          setText('lastAcc', lastAcc);
-          appendLog(`Epoch ${epoch+1}/${epochs} — loss: ${lastLoss} acc: ${lastAcc}`);
-          // update progress bar
-          const pct = Math.round(((epoch+1)/epochs) * 100);
-          document.getElementById('trainProgress').style.width = pct + '%';
-        },
-        onTrainEnd: ()=> {
-          appendLog('Training complete.');
-          setText('modelStatus', 'Trained in-browser');
-          lastMetrics = {loss:lastLoss, acc:lastAcc};
-          document.getElementById('trainProgress').style.width = '100%';
-        }
+    const chars = "01□◇△▽※░▒▓█ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    function rain() {
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = "#00ff95";
+      ctx.font = fontSize + "px Share Tech Mono";
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
       }
-    });
-    // free tensors
-    X.dispose(); y.dispose();
-    logChat('Model trained. Use Predict Row to test.', 'ai');
-  }catch(err){
-    appendLog('Train error: ' + err);
-    logChat('Training error: ' + String(err), 'ai');
-    setText('modelStatus','Error');
-  }
-});
+      requestAnimationFrame(rain);
+    }
+    rain();
 
-/* ---------- Predict functions ---------- */
-document.getElementById('predictBtn').addEventListener('click', ()=>{
-  const idx = Number(document.getElementById('predictIndex').value) || 0;
-  predictRow(idx);
-});
+    // Chat logic (frontend-only; replace fetch with backend when you have one)
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
+    const personaEl = document.getElementById('persona');
+    const summaryEl = document.getElementById('summary');
 
-document.getElementById('predictCsvBtn').addEventListener('click', ()=>{
-  if(!rawData) { logChat('Load CSV first', 'ai'); return; }
-  const idx = Math.min(9, rawData.length-1);
-  predictRow(idx);
-});
+    let messages = [];
+    let sessionSummary = "";
 
-async function predictRow(index){
-  if(!model) { logChat('No model: train one first.', 'ai'); return; }
-  if(!rawData) { logChat('Load CSV first.', 'ai'); return; }
-  // find numeric row indexed by original order (skip rows with missing numeric)
-  const cleaned = [];
-  for(const row of rawData){
-    const vals = featureNames.map(f => {
-      const v = row[f];
-      return (v==null || v==='') ? NaN : Number(v);
-    });
-    if(vals.some(v=>isNaN(v))) continue;
-    cleaned.push({vals, row});
-  }
-  if(index < 0 || index >= cleaned.length) { logChat('Index out of range for numeric rows: ' + cleaned.length, 'ai'); return; }
-  const vals = cleaned[index].vals;
-  // normalize with same stats used during training - we recompute stats here (same process)
-  const tensor = tf.tensor2d([vals]);
-  // compute training stats again:
-  const Xall = tf.tensor2d(cleaned.map(c=>c.vals));
-  const {mean, variance} = tf.moments(Xall, 0);
-  const std = variance.sqrt().maximum(1e-6);
-  const Xnorm = tensor.sub(mean).div(std);
-  const pred = model.predict(Xnorm);
-  const prob = (await pred.data())[0];
-  const label = prob >= 0.5 ? 'positive' : 'negative';
-  setText('predictResult', `Index ${index} -> ${label} (prob=${prob.toFixed(4)})`);
-  logChat(`<b>Prediction</b> index ${index}: ${label} (prob=${prob.toFixed(4)})`, 'ai');
-  tensor.dispose(); Xall.dispose(); Xnorm.dispose(); pred.dispose();
-}
+    function addMessage(role, content) {
+      messages.push({ role, content, ts: Date.now() });
+      const wrap = document.createElement('div');
+      wrap.className = `msg ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = content;
+      wrap.appendChild(bubble);
+      chatEl.appendChild(wrap);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
 
-/* ---------- Save / Load model to IndexedDB ---------- */
-document.getElementById('saveModelBtn').addEventListener('click', async ()=>{
-  if(!model){ logChat('No model to save', 'ai'); return; }
-  const name = 'indexeddb://daot_cancer_model';
-  appendLog('Saving model to IndexedDB...');
-  try{
-    await model.save(name);
-    appendLog('Model saved.');
-    logChat('Model saved to browser IndexedDB as <code>daot_cancer_model</code>.', 'ai');
-  }catch(err){
-    appendLog('Save error: ' + err);
-    logChat('Save error: ' + err, 'ai');
-  }
-});
-document.getElementById('loadModelBtn').addEventListener('click', async ()=>{
-  const name = 'indexeddb://daot_cancer_model';
-  appendLog('Loading model from IndexedDB...');
-  try{
-    model = await tf.loadLayersModel(name);
-    setText('modelStatus','Model loaded from IndexedDB');
-    appendLog('Model loaded.');
-    logChat('Model loaded from IndexedDB.', 'ai');
-  }catch(err){
-    appendLog('Load error: ' + err);
-    logChat('Load error: ' + err, 'ai');
-  }
-});
-document.getElementById('clearModelBtn').addEventListener('click', async ()=>{
-  try{
-    await tf.io.removeModel('indexeddb://daot_cancer_model');
-    model = null;
-    setText('modelStatus','No model');
-    appendLog('Cleared saved model.');
-    logChat('Saved model cleared.', 'ai');
-  }catch(err){
-    appendLog('Clear error: ' + err);
-    logChat('Clear error: ' + err, 'ai');
-  }
-});
+    function addStreamingMessage(role) {
+      const wrap = document.createElement('div');
+      wrap.className = `msg ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      wrap.appendChild(bubble);
+      chatEl.appendChild(wrap);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return {
+        append(chunk){ bubble.textContent += chunk; chatEl.scrollTop = chatEl.scrollHeight; },
+        done(){ /* no-op */ }
+      };
+    }
 
-/* ---------- Simple Chat / Code helper ---------- */
-document.getElementById('sendMsg').addEventListener('click', ()=>{
-  const text = document.getElementById('userMsg').value.trim();
-  if(!text) return;
-  document.getElementById('userMsg').value = '';
-  logChat(text, 'user');
-  handleUserMessage(text);
-});
+    // Local mock generator (no API key). Replace with backend fetch later.
+    function localReply(userText) {
+      const p = personaEl.value;
+      const prefix = p === "coder" ? "Code insight: "
+                  : p === "teacher" ? "Tutor note: "
+                  : p === "creative" ? "Story spark: "
+                  : p === "support" ? "Support reply: "
+                  : "";
+      const hints = [
+        "Let’s clarify your goal in one sentence.",
+        "Here’s a compact plan with three steps.",
+        "Edge cases matter—want me to list them?",
+        "Prefer code, concepts, or examples?"
+      ];
+      return `${prefix}${hints[Math.floor(Math.random()*hints.length)]}\n\nYou said: “${userText}”.`;
+    }
 
-async function handleUserMessage(text){
-  // Basic intent detection by keywords
-  const t = text.toLowerCase();
-  if(t.includes('eda') || t.includes('summary') || t.includes('describe') || t.includes('explain dataset')){
-    if(!rawData){ logChat('Load the CSV first (Load CSV button).', 'ai'); return; }
-    computeEDA();
-    const ed = document.getElementById('edaOutput').textContent;
-    logChat('<b>EDA summary</b><br><pre class="code">' + ed + '</pre>', 'ai');
-    return;
-  }
-  if(t.includes('train') || t.includes('model')){
-    logChat('Starting training... (press Train Model if you want more control)', 'ai');
-    document.getElementById('trainBtn').click();
-    return;
-  }
-  if(t.includes('predict')){
-    const idx = Number(t.match(/\\d+/)?.[0] ?? 0);
-    predictRow(idx);
-    return;
-  }
-  if(t.includes('help') || t.includes('how to')){
-    logChat('I can: load your CSV, summarize it (EDA), train a small TF.js classifier, save/load model to browser, and run JS snippets. Try: "EDA", "train model", "predict 3", or paste JS and click Explain JS."', 'ai');
-    return;
-  }
-  // default fallback: echo + simple code assistant behavior
-  if(t.includes('code') || t.includes('js') || t.includes('javascript') || t.includes('function')){
-    logChat('I can explain JS pasted into the JS Runner. Paste code and press <b>Explain JS</b>.', 'ai');
-    return;
-  }
-  // else small creative reply
-  logChat('Daot AI: I heard you — try asking for "EDA", "train model", "predict 0", or paste JS to analyze.', 'ai');
-}
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      inputEl.value = '';
 
-/* ---------- JS Runner & Explainer ---------- */
-document.getElementById('runJs').addEventListener('click', ()=>{
-  const code = document.getElementById('codeBox').textContent || '';
-  const out = document.getElementById('jsOutput');
-  out.textContent = '';
-  try{
-    // tiny sandbox using Function — NOT safe for untrusted code
-    const result = Function('"use strict";\\n' + code)();
-    if(result instanceof Promise){
-      result.then(r=> out.textContent = String(r)).catch(e => out.textContent = 'Runtime error: ' + e);
-    } else out.textContent = String(result);
-  }catch(err){
-    out.textContent = 'Runtime error: ' + err;
-  }
-});
-document.getElementById('explainJs').addEventListener('click', ()=>{
-  const code = document.getElementById('codeBox').textContent || '';
-  const explanation = explainJavascript(code);
-  logChat('<b>JS Explanation</b><br><pre class="code">' + explanation + '</pre>', 'ai');
-});
-function explainJavascript(code){
-  // very simple rule-based explainer
-  if(!code.trim()) return 'No code provided.';
-  const lines = code.split('\\n').slice(0,40);
-  let out = [];
-  out.push('Code length: ' + lines.length + ' lines');
-  if(code.includes('fetch(')) out.push('- Uses fetch() to call network resources.');
-  if(code.includes('document.') || code.includes('getElementById')) out.push('- Interacts with the DOM.');
-  if(code.includes('console.log')) out.push('- Prints debugging output using console.log.');
-  if(code.includes('async') || code.includes('await')) out.push('- Uses async/await for promises.');
-  if(code.includes('function') && code.includes('return')) out.push('- Declares functions that return values.');
-  out.push('\\nTop 5 lines preview:\\n' + lines.slice(0,5).join('\\n'));
-  out.push('\\nSuggestion: Run it in the runner. For security, do not run untrusted code that manipulates filesystem or sensitive tokens.');
-  return out.join('\\n');
-}
+      const stream = addStreamingMessage('assistant');
 
-/* ---------- Page ready ---------- */
-logChat('Page ready. Dataset default: <code>/mnt/data/cancer.csv</code>', 'ai');
-
-</script>
-</body>
-</html>
+      // Simulate streaming locally (no backend required)
+      const full = localReply(text);
+      const chunks = full.match(/.{
