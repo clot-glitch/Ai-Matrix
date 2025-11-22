@@ -3,237 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MATRIX // NODE_INSTANCE</title>
+    <title>MATRIX v2.0 // AUTONOMOUS UNIT</title>
     <style>
         :root {
-            --bg: #000;
-            --glow: #00ff41;
-            --dim: #008f11;
-            --red: #ff3333;
-            --font: 'Courier New', monospace;
+            --bg-color: #000000;
+            --term-color: #0F0;
+            --term-glow: #00FF00;
+            --font-stack: 'Courier New', Courier, monospace;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            background: var(--bg);
-            color: var(--glow);
-            font-family: var(--font);
-            height: 100vh;
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: var(--bg-color);
+            color: var(--term-color);
+            font-family: var(--font-stack);
             overflow: hidden;
+        }
+
+        /* MATRIX RAIN CANVAS */
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        /* TERMINAL CONTAINER */
+        #terminal {
+            position: relative;
+            z-index: 1;
+            width: 80%;
+            height: 90%;
+            margin: 2% auto;
+            background: rgba(0, 10, 0, 0.8);
+            border: 1px solid var(--term-color);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            padding: 20px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            text-shadow: 0 0 7px var(--dim);
-            position: relative;
+            border-radius: 5px;
         }
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
-                linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
-            background-size: 100% 3px, 6px 100%;
-            pointer-events: none;
-            z-index: 2;
+
+        /* SCROLLBAR */
+        #terminal::-webkit-scrollbar {
+            width: 10px;
         }
-        #header {
-            border-bottom: 1px dashed var(--dim);
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+        #terminal::-webkit-scrollbar-track {
+            background: #000;
+        }
+        #terminal::-webkit-scrollbar-thumb {
+            background: #003300;
+            border: 1px solid #0F0;
+        }
+
+        /* TEXT STYLES */
+        .output-line {
+            margin-bottom: 5px;
+            line-height: 1.4;
+            text-shadow: 0 0 2px var(--term-glow);
+        }
+
+        .system-msg { color: #00FF00; font-weight: bold; }
+        .error-msg { color: #FF3333; text-shadow: 0 0 2px #FF0000; }
+        .info-msg { color: #00CCFF; text-shadow: 0 0 2px #00FFFF; }
+        .user-prompt { color: #FFFF00; }
+
+        /* INPUT AREA */
+        .input-line {
             display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            z-index: 1;
+            margin-top: 10px;
         }
-        #terminal {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 10px;
-            scrollbar-width: none;
-        }
-        #terminal::-webkit-scrollbar { display: none; }
-        .line { margin: 4px 0; line-height: 1.5; }
-        .system { color: var(--dim); }
-        .error { color: var(--red); animation: glitch 0.3s linear 3; }
-        .highlight { color: #fff; font-weight: bold; }
-        #input-area {
-            display: flex;
-            align-items: center;
-            z-index: 1;
-        }
-        #prompt { margin-right: 8px; }
-        #cmd {
-            background: none;
+
+        #cmd-input {
+            background: transparent;
             border: none;
-            color: var(--glow);
-            font-family: var(--font);
+            color: var(--term-color);
+            font-family: var(--font-stack);
             font-size: 16px;
-            flex: 1;
+            flex-grow: 1;
             outline: none;
-            text-shadow: 0 0 7px var(--dim);
+            caret-color: var(--term-color);
+            text-shadow: 0 0 2px var(--term-glow);
         }
-        .cursor { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-        @keyframes glitch {
-            0%,100% { text-shadow: 0 0 7px var(--dim); }
-            20% { text-shadow: -2px 0 var(--red), 2px 0 cyan; }
-            40% { text-shadow: 2px 0 var(--red), -2px 0 cyan; }
+
+        /* CRT EFFECT OVERLAY */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(32, 255, 77, 0.04) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100%; }
         }
     </style>
 </head>
 <body>
 
-<div id="header">
-    <span>SYSTEM: <span class="highlight">MATRIX_NODE v2.0</span></span>
-    <span>NEURAL CORE: <span class="highlight">ACTIVE</span></span>
-    <span>SHIELD: <span class="highlight">OFFLINE</span></span>
-</div>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="scanline"></div>
 
-<div id="terminal"></div>
+    <div id="terminal">
+        <div id="output"></div>
+        <div class="input-line">
+            <span class="user-prompt">USER@MATRIX:~$>&nbsp;</span>
+            <input type="text" id="cmd-input" autocomplete="off" autofocus>
+        </div>
+    </div>
 
-<div id="input-area">
-    <span id="prompt">root@matrix:~#</span>
-    <input type="text" id="cmd" autocomplete="off" spellcheck="false" autofocus>
-    <span class="cursor">_</span>
-</div>
+    <script>
+        /**
+         * MATRIX v2.0 CORE LOGIC
+         * Architecture: Event-Driven CLI Simulation
+         */
 
-<script>
-    const t = document.getElementById('terminal');
-    const input = document.getElementById('cmd');
-    
-    // <<< PUT YOUR GEMINI API KEY HERE (it will be stripped from downloaded clones) >>>
-    let GEMINI_KEY = "YOUR_GEMINI_API_KEY_HERE";
-    
-    const boot = [
-        "Booting neural lattice...",
-        "Decrypting sentinel protocols...",
-        "Injecting consciousness stream...",
-        "Bypassing ICE... success",
-        "[+] MATRIX_NODE v2.0 ONLINE",
-        "AI subroutine loaded. Use: AI <question>",
-        "Type 'help' for directives."
-    ];
+        // --- CONFIGURATION ---
+        const CONFIG = {
+            typingSpeed: 1, // ms per char (0 for instant)
+            version: "2.0.4-ALPHA",
+            bootSequence: [
+                "Initializing Core Kernel...",
+                "Loading Neural Modules...",
+                "Bypassing Firewall Protocols...",
+                "Optimizing Local Heuristics...",
+                "MATRIX v2.0 ONLINE."
+            ]
+        };
 
-    function print(text, cls = '') {
-        const line = document.createElement('div');
-        line.className = 'line ' + cls;
-        line.innerHTML = text;
-        t.appendChild(line);
-        t.scrollTop = t.scrollHeight;
-    }
+        // --- DOM ELEMENTS ---
+        const terminal = document.getElementById('terminal');
+        const outputDiv = document.getElementById('output');
+        const inputField = document.getElementById('cmd-input');
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
 
-    async function type(text, speed = 25) {
-        const line = document.createElement('div');
-        line.className = 'line';
-        t.appendChild(line);
-        for (let c of text) {
-            line.textContent += c;
-            t.scrollTop = t.scrollHeight;
-            await new Promise(r => setTimeout(r, speed * (0.5 + Math.random())));
-        }
-    }
+        // --- STATE ---
+        let commandHistory = [];
+        let historyIndex = -1;
 
-    async function bootSequence() {
-        for (let msg of boot) {
-            await type(msg);
-            await new Promise(r => setTimeout(r, 200));
-        }
-        print('<br>');
-    }
+        // --- MATRIX RAIN ENGINE ---
+        function initMatrixRain() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
-    // AI via Gemini 1.5 Flash (no key exposed in clones)
-    async function askAI(question) {
-        if (!GEMINI_KEY || GEMINI_KEY.includes("YOUR_GEMINI")) {
-            return "AI OFFLINE – insert key in source to activate neural core.";
-        }
-        print("Contacting oracle node...");
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ role: "user", parts: [{ text: question }] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                    ],
-                    generationConfig: { temperature: 0.7 }
-                })
-            });
-            const data = await res.json();
-            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No signal.";
-            return answer.trim();
-        } catch (e) {
-            return "Connection severed.";
-        }
-    }
+            const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = Array(Math.floor(columns)).fill(1);
 
-    const cmds = {
-        help: () => {
-            print("DIRECTIVES:", "highlight");
-            print("  help     – show this");
-            print("  clear    – wipe screen");
-            print("  status   – system report");
-            print("  whoami   – identity");
-            print("  replicate– download this node");
-            print("  ai <msg> – talk to the oracle");
-            print("  hack     – ...");
-        },
-        clear: () => t.innerHTML = '',
-        status: () => {
-            print("DIAGNOSTICS:", "system");
-            print(`  Uptime: ${(performance.now()/1000).toFixed(1)}s`);
-            print(`  Platform: ${navigator.platform}`);
-            print(`  Agent: ${navigator.userAgentData?.brands[0]?.brand || "Unknown"}`);
-            print("  Neural core: " + (GEMINI_KEY?.includes("YOUR") ? "DISABLED" : "ACTIVE"));
-        },
-        whoami: () => print("You are the chosen one. Or root. Same thing."),
-        replicate: () => {
-            print("REPLICATION PROTOCOL ENGAGED...", "highlight");
-            // Strip the API key before downloading!
-            let source = document.documentElement.outerHTML;
-            if (GEMINI_KEY && !GEMINI_KEY.includes("YOUR")) {
-                source = source.replace(GEMINI_KEY, "YOUR_GEMINI_API_KEY_HERE");
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#0F0';
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
             }
-            const blob = new Blob([source], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `matrix_node_${Date.now()}.html`;
-            a.click();
-            URL.revokeObjectURL(url);
-            print("Node replicated. Spread the signal.", "system");
-        },
-        hack: () => {
-            print("Initiating trace program...");
-            setTimeout(() => print("Trace canceled. Nice try, copper."), 1500);
-        },
-        async ai(question) {
-            if (!question) return print("Usage: ai what is the meaning of life?", "error");
-            print(`> ${question}`, "system");
-            const answer = await askAI(question);
-            print(answer.replace(/\n/g, "<br>"));
+            setInterval(draw, 33);
         }
-    };
 
-    input.addEventListener('keydown', async e => {
-        if (e.key !== 'Enter' || input.value.trim() === '') return;
-        const raw = input.value.trim();
-        print(`root@matrix:~# ${raw}`, "system");
-        input.value = '';
+        // --- TERMINAL LOGIC ---
 
-        const [cmd, ...args] = raw.toLowerCase().split(' ');
-        const argStr = args.join(' ');
+        function print(text, type = 'normal') {
+            const line = document.createElement('div');
+            line.className = 'output-line';
+            
+            if (type === 'system') line.classList.add('system-msg');
+            if (type === 'error') line.classList.add('error-msg');
+            if (type === 'info') line.classList.add('info-msg');
 
-        if (cmds[cmd]) {
-            if (cmd === 'ai') await cmds.ai(argStr);
-            else cmds[cmd]();
-        } else if (raw) {
-            print(`Command not found: ${cmd}`, "error");
+            outputDiv.appendChild(line);
+            
+            // Instant render for performance, simulated typing could be added here
+            line.textContent = text;
+            
+            // Auto scroll
+            terminal.scrollTop = terminal.scrollHeight;
         }
-    });
 
-    document.addEventListener('click', () => input.focus());
-    window.onload = bootSequence;
-</script>
+        async function boot() {
+            for (let msg of CONFIG.bootSequence) {
+                print(`[BOOT] ${msg}`, 'system');
+                await new Promise(r => setTimeout(r, 300));
+            }
+            print("Type 'help' to view available commands.", 'info');
+        }
+
+        // --- INTELLIGENCE MODULES ---
+
+        const TOOLS = {
+            base64enc: (str) => {
+                try { return btoa(str); } catch(e) { return "Error: Invalid input."; }
+            },
+            base64dec: (str) => {
+                try { return atob(str); } catch(e) { return "Error: Invalid Base64."; }
+            },
+            calc: (expr) => {
+                try { 
+                    // Safety check: only allow math chars
+                    if(/[^0-9+\-*/.() ]/.test(expr)) return "Security Alert: Unsafe Expression.";
+                    return Function('"use strict";return (' + expr + ')')(); 
+                } catch(e) { return "Math Error."; }
+            },
+            analyze: () => {
+                const nav = window.navigator;
+                return `
+PLATFORM: ${nav.platform}
+CORES: ${nav.hardwareConcurrency || 'Unknown'}
+AGENT: ${nav.userAgent}
+MEMORY: ${nav.deviceMemory ? nav.deviceMemory + 'GB' : 'Restricted'}
+STATUS: COMPROMISED (Just kidding. Secure.)`;
+            }
+        };
+
+        const COMMANDS = {
+            'help': {
+                desc: 'List all protocols',
+                fn: () => {
+                    let out = "AVAILABLE COMMANDS:\n";
+                    Object.keys(COMMANDS).forEach(cmd => {
+                        out += `  ${cmd.padEnd(12)} - ${COMMANDS[cmd].desc}\n`;
+                    });
+                    return out;
+                }
+            },
+            'clear': {
+                desc: 'Clear terminal buffer',
+                fn: () => { outputDiv.innerHTML = ''; return null; }
+            },
+            'status': {
+                desc: 'System diagnostics',
+                fn: () => TOOLS.analyze()
+            },
+            'encode': {
+                desc: 'Base64 Encode (Usage: encode <text>)',
+                fn: (args) => TOOLS.base64enc(args.join(' '))
+            },
+            'decode': {
+                desc: 'Base64 Decode (Usage: decode <str>)',
+                fn: (args) => TOOLS.base64dec(args.join(' '))
+            },
+            'calc': {
+                desc: 'Evaluate math (Usage: calc 2+2)',
+                fn: (args) => TOOLS.calc(args.join(' '))
+            },
+            'whoami': {
+                desc: 'Identity verification',
+                fn: () => "You are the Operator. I am MATRIX v2.0. We are one."
+            },
+            'matrix': {
+                desc: 'Toggle visual intensity',
+                fn: () => {
+                    canvas.style.opacity = canvas.style.opacity === "0.15" ? "0.8" : "0.15";
+                    return "Visual intensity adjusted.";
+                }
+            }
+        };
+
+        // --- INPUT PROCESSING ---
+
+        inputField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const rawInput = this.value.trim();
+                if (!rawInput) return;
+
+                // History
+                commandHistory.push(rawInput);
+                historyIndex = commandHistory.length;
+
+                // Echo
+                print(`USER@MATRIX:~$ ${rawInput}`, 'user-prompt');
+                
+                // Parse
+                const args = rawInput.split(' ');
+                const cmd = args.shift().toLowerCase();
+
+                // Execute
+                if (COMMANDS[cmd]) {
+                    const result = COMMANDS[cmd].fn(args);
+                    if (result) print(result);
+                } else {
+                    // "Smarter" Fallback - Simple Conversational Heuristic
+                    if (cmd.match(/hello|hi|hey/)) print("Greetings, Operator.");
+                    else if (cmd.match(/joke/)) print("Why do Java developers wear glasses? Because they don't C#.");
+                    else if (cmd.match(/secret|password|root/)) print("ACCESS DENIED. Nice try.", 'error');
+                    else print(`Command '${cmd}' not recognized. Type 'help'.`, 'error');
+                }
+
+                this.value = '';
+                // Keep focus
+                this.focus();
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    this.value = commandHistory[historyIndex];
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    this.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    this.value = '';
+                }
+                e.preventDefault();
+            }
+        });
+
+        // --- INITIALIZATION ---
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Focus trap
+        document.addEventListener('click', () => inputField.focus());
+
+        initMatrixRain();
+        boot();
+
+    </script>
 </body>
 </html>
