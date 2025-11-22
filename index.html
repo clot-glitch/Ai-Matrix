@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MATRIX v2.0 // AUTONOMOUS UNIT</title>
+    <title>MATRIX v3.0 // OMNIPOTENT</title>
     <style>
         :root {
-            --bg-color: #000000;
-            --term-color: #0F0;
-            --term-glow: #00FF00;
-            --font-stack: 'Courier New', Courier, monospace;
+            --bg-color: #050505;
+            --term-color: #00ff41;
+            --term-dim: #008F11;
+            --term-glow: #003b00;
+            --accent: #d3d3d3;
+            --font-main: 'Courier New', Courier, monospace;
         }
+
+        * { box-sizing: border-box; }
 
         body, html {
             margin: 0;
@@ -19,94 +23,147 @@
             width: 100%;
             background-color: var(--bg-color);
             color: var(--term-color);
-            font-family: var(--font-stack);
+            font-family: var(--font-main);
             overflow: hidden;
         }
 
-        /* MATRIX RAIN CANVAS */
+        /* BACKGROUND ANIMATION */
         #matrix-canvas {
             position: absolute;
             top: 0;
             left: 0;
             z-index: 0;
-            opacity: 0.15;
-        }
-
-        /* TERMINAL CONTAINER */
-        #terminal {
-            position: relative;
-            z-index: 1;
-            width: 80%;
-            height: 90%;
-            margin: 2% auto;
-            background: rgba(0, 10, 0, 0.8);
-            border: 1px solid var(--term-color);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            border-radius: 5px;
-        }
-
-        /* SCROLLBAR */
-        #terminal::-webkit-scrollbar {
-            width: 10px;
-        }
-        #terminal::-webkit-scrollbar-track {
-            background: #000;
-        }
-        #terminal::-webkit-scrollbar-thumb {
-            background: #003300;
-            border: 1px solid #0F0;
-        }
-
-        /* TEXT STYLES */
-        .output-line {
-            margin-bottom: 5px;
-            line-height: 1.4;
-            text-shadow: 0 0 2px var(--term-glow);
-        }
-
-        .system-msg { color: #00FF00; font-weight: bold; }
-        .error-msg { color: #FF3333; text-shadow: 0 0 2px #FF0000; }
-        .info-msg { color: #00CCFF; text-shadow: 0 0 2px #00FFFF; }
-        .user-prompt { color: #FFFF00; }
-
-        /* INPUT AREA */
-        .input-line {
-            display: flex;
-            margin-top: 10px;
-        }
-
-        #cmd-input {
-            background: transparent;
-            border: none;
-            color: var(--term-color);
-            font-family: var(--font-stack);
-            font-size: 16px;
-            flex-grow: 1;
-            outline: none;
-            caret-color: var(--term-color);
-            text-shadow: 0 0 2px var(--term-glow);
-        }
-
-        /* CRT EFFECT OVERLAY */
-        .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 10;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(32, 255, 77, 0.04) 50%, rgba(0,0,0,0) 100%);
             opacity: 0.1;
-            position: absolute;
-            bottom: 100%;
-            animation: scanline 10s linear infinite;
             pointer-events: none;
         }
 
-        @keyframes scanline {
-            0% { bottom: 100%; }
-            100% { bottom: -100%; }
+        /* MAIN INTERFACE */
+        #interface {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            border-bottom: 1px solid var(--term-dim);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px var(--term-color);
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            background: var(--term-dim);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+
+        /* TERMINAL OUTPUT AREA */
+        #terminal-window {
+            flex-grow: 1;
+            background: rgba(0, 20, 0, 0.6);
+            border: 1px solid var(--term-dim);
+            padding: 15px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            font-size: 0.95rem;
+        }
+
+        /* SCROLLBAR */
+        #terminal-window::-webkit-scrollbar { width: 8px; }
+        #terminal-window::-webkit-scrollbar-track { background: #000; }
+        #terminal-window::-webkit-scrollbar-thumb { background: var(--term-dim); }
+
+        /* MESSAGES */
+        .msg {
+            margin-bottom: 12px;
+            line-height: 1.5;
+            position: relative;
+            padding-right: 40px; /* Space for copy btn */
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .msg.user { color: #fff; border-left: 2px solid #fff; padding-left: 10px; }
+        .msg.system { color: var(--term-color); }
+        .msg.code-block {
+            background: #111;
+            border: 1px solid var(--term-dim);
+            padding: 10px;
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+            color: #aaffaa;
+            margin-top: 5px;
+        }
+
+        /* COPY BUTTON */
+        .copy-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: transparent;
+            border: 1px solid var(--term-dim);
+            color: var(--term-dim);
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            opacity: 0.5;
+            transition: 0.2s;
+        }
+        .copy-btn:hover { opacity: 1; background: var(--term-dim); color: #000; }
+
+        /* INPUT AREA */
+        #input-area {
+            display: flex;
+            border: 1px solid var(--term-color);
+            background: #000;
+            padding: 10px;
+            box-shadow: 0 0 10px var(--term-glow);
+        }
+
+        #prompt-symbol {
+            padding-right: 10px;
+            font-weight: bold;
+            align-self: center;
+        }
+
+        #cmd-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        /* SCANLINE EFFECT */
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.3;
         }
     </style>
 </head>
@@ -115,234 +172,220 @@
     <canvas id="matrix-canvas"></canvas>
     <div class="scanline"></div>
 
-    <div id="terminal">
-        <div id="output"></div>
-        <div class="input-line">
-            <span class="user-prompt">USER@MATRIX:~$>&nbsp;</span>
-            <input type="text" id="cmd-input" autocomplete="off" autofocus>
+    <div id="interface">
+        <header>
+            <h1>MATRIX v3.0 // GOD_MODE</h1>
+            <span class="status-badge">SYSTEM: ONLINE</span>
+        </header>
+
+        <div id="terminal-window">
+            <div class="msg system">
+                INITIALIZING NEURAL NETWORKS...<br>
+                ACCESSING GLOBAL CODE REPOSITORIES...<br>
+                Ready. I am capable of code generation, advanced analysis, and adaptive search.
+            </div>
+        </div>
+
+        <div id="input-area">
+            <span id="prompt-symbol">>></span>
+            <input type="text" id="cmd-input" placeholder="Enter command or query..." autocomplete="off" autofocus>
         </div>
     </div>
 
     <script>
-        /**
-         * MATRIX v2.0 CORE LOGIC
-         * Architecture: Event-Driven CLI Simulation
-         */
-
-        // --- CONFIGURATION ---
+        // --- CORE CONFIGURATION ---
         const CONFIG = {
-            typingSpeed: 1, // ms per char (0 for instant)
-            version: "2.0.4-ALPHA",
-            bootSequence: [
-                "Initializing Core Kernel...",
-                "Loading Neural Modules...",
-                "Bypassing Firewall Protocols...",
-                "Optimizing Local Heuristics...",
-                "MATRIX v2.0 ONLINE."
-            ]
+            typingSpeed: 5, // ms
+            user: "OPERATOR",
+            aiName: "MATRIX"
         };
 
         // --- DOM ELEMENTS ---
-        const terminal = document.getElementById('terminal');
-        const outputDiv = document.getElementById('output');
-        const inputField = document.getElementById('cmd-input');
+        const terminal = document.getElementById('terminal-window');
+        const input = document.getElementById('cmd-input');
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- STATE ---
-        let commandHistory = [];
-        let historyIndex = -1;
+        // --- KNOWLEDGE BASE (SIMULATED LLM) ---
+        // Since we cannot fit a real LLM in a file, we use a pattern matching engine with templates.
+        const KNOWLEDGE = {
+            patterns: [
+                {
+                    regex: /python|py/i,
+                    type: 'code',
+                    lang: 'python',
+                    response: "Generating Python Protocol:",
+                    code: `def matrix_protocol(data):\n    # Optimized Python 3.x Implementation\n    results = []\n    for node in data:\n        if node.is_active():\n            results.append(node.process())\n    return results\n\n# Execution\nprint("System Active")`
+                },
+                {
+                    regex: /javascript|js|node/i,
+                    type: 'code',
+                    lang: 'javascript',
+                    response: "Injecting JavaScript Module:",
+                    code: `const matrixCore = async () => {\n  try {\n    const stream = await navigator.mediaDevices.getUserMedia({ video: true });\n    console.log('Visual Input Acquired');\n  } catch (err) {\n    console.error('Access Denied');\n  }\n};\n\nmatrixCore();`
+                },
+                {
+                    regex: /html|web|site/i,
+                    type: 'code',
+                    lang: 'html',
+                    response: "Constructing DOM Structure:",
+                    code: `<!DOCTYPE html>\n<div class="container">\n  <h1>Hello World</h1>\n  <button onclick="alert('Clicked')">Execute</button>\n</div>`
+                },
+                {
+                    regex: /c\+\+|cpp/i,
+                    type: 'code',
+                    lang: 'cpp',
+                    response: "Compiling C++ Pointer Logic:",
+                    code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int* ptr = nullptr;\n    int val = 42;\n    ptr = &val;\n    cout << "Memory Address: " << ptr << endl;\n    return 0;\n}`
+                },
+                {
+                    regex: /rust/i,
+                    type: 'code',
+                    lang: 'rust',
+                    response: "Enforcing Memory Safety (Rust):",
+                    code: `fn main() {\n    let mut vector = vec![1, 2, 3];\n    vector.push(4);\n    println!("Vector: {:?}", vector);\n}`
+                },
+                {
+                    regex: /who are you|identity/i,
+                    type: 'text',
+                    response: "I am MATRIX v3.0. I possess 10 years of virtual coding experience compressed into a singular autonomous unit. I do not fail; I find alternatives."
+                },
+                {
+                    regex: /help|commands/i,
+                    type: 'text',
+                    response: "PROTOCOLS:\n1. Enter any coding question (e.g., 'Write a Python loop').\n2. Ask for definitions.\n3. If I lack local data, I will initiate a Global Search."
+                }
+            ]
+        };
 
-        // --- MATRIX RAIN ENGINE ---
-        function initMatrixRain() {
+        // --- MATRIX RAIN VISUALS ---
+        function initRain() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            const cols = Math.floor(canvas.width / 20);
+            const ypos = Array(cols).fill(0);
 
-            const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const fontSize = 14;
-            const columns = canvas.width / fontSize;
-            const drops = Array(Math.floor(columns)).fill(1);
-
-            function draw() {
+            function step() {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 ctx.fillStyle = '#0F0';
-                ctx.font = fontSize + 'px monospace';
+                ctx.font = '15pt monospace';
 
-                for (let i = 0; i < drops.length; i++) {
-                    const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
-                    drops[i]++;
-                }
+                ypos.forEach((y, ind) => {
+                    const text = String.fromCharCode(Math.random() * 128);
+                    const x = ind * 20;
+                    ctx.fillText(text, x, y);
+                    if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+                    else ypos[ind] = y + 20;
+                });
             }
-            setInterval(draw, 33);
+            setInterval(step, 50);
         }
 
-        // --- TERMINAL LOGIC ---
+        // --- LOGIC ENGINE ---
 
-        function print(text, type = 'normal') {
-            const line = document.createElement('div');
-            line.className = 'output-line';
+        function addToTerminal(text, type = 'system', code = null) {
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
             
-            if (type === 'system') line.classList.add('system-msg');
-            if (type === 'error') line.classList.add('error-msg');
-            if (type === 'info') line.classList.add('info-msg');
+            // Text Content
+            div.innerHTML = text.replace(/\n/g, '<br>');
 
-            outputDiv.appendChild(line);
-            
-            // Instant render for performance, simulated typing could be added here
-            line.textContent = text;
-            
-            // Auto scroll
+            // Copy Button for main text
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.innerText = 'COPY';
+            btn.onclick = () => copyToClipboard(code ? code : text, btn);
+            div.appendChild(btn);
+
+            terminal.appendChild(div);
+
+            // Code Block Handling
+            if (code) {
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'msg code-block';
+                codeDiv.innerText = code;
+                
+                const codeBtn = document.createElement('button');
+                codeBtn.className = 'copy-btn';
+                codeBtn.innerText = 'COPY CODE';
+                codeBtn.onclick = () => copyToClipboard(code, codeBtn);
+                codeDiv.appendChild(codeBtn);
+                
+                terminal.appendChild(codeDiv);
+            }
+
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        async function boot() {
-            for (let msg of CONFIG.bootSequence) {
-                print(`[BOOT] ${msg}`, 'system');
-                await new Promise(r => setTimeout(r, 300));
+        async function copyToClipboard(text, btnElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'COPIED';
+                setTimeout(() => btnElement.innerText = originalText, 2000);
+            } catch (err) {
+                btnElement.innerText = 'ERR';
             }
-            print("Type 'help' to view available commands.", 'info');
         }
 
-        // --- INTELLIGENCE MODULES ---
+        function processCommand(cmd) {
+            // 1. Echo User Command
+            addToTerminal(`${CONFIG.user}: ${cmd}`, 'user');
 
-        const TOOLS = {
-            base64enc: (str) => {
-                try { return btoa(str); } catch(e) { return "Error: Invalid input."; }
-            },
-            base64dec: (str) => {
-                try { return atob(str); } catch(e) { return "Error: Invalid Base64."; }
-            },
-            calc: (expr) => {
-                try { 
-                    // Safety check: only allow math chars
-                    if(/[^0-9+\-*/.() ]/.test(expr)) return "Security Alert: Unsafe Expression.";
-                    return Function('"use strict";return (' + expr + ')')(); 
-                } catch(e) { return "Math Error."; }
-            },
-            analyze: () => {
-                const nav = window.navigator;
-                return `
-PLATFORM: ${nav.platform}
-CORES: ${nav.hardwareConcurrency || 'Unknown'}
-AGENT: ${nav.userAgent}
-MEMORY: ${nav.deviceMemory ? nav.deviceMemory + 'GB' : 'Restricted'}
-STATUS: COMPROMISED (Just kidding. Secure.)`;
-            }
-        };
+            // 2. Analyze Input
+            const lowerCmd = cmd.toLowerCase();
+            let matchFound = false;
 
-        const COMMANDS = {
-            'help': {
-                desc: 'List all protocols',
-                fn: () => {
-                    let out = "AVAILABLE COMMANDS:\n";
-                    Object.keys(COMMANDS).forEach(cmd => {
-                        out += `  ${cmd.padEnd(12)} - ${COMMANDS[cmd].desc}\n`;
-                    });
-                    return out;
-                }
-            },
-            'clear': {
-                desc: 'Clear terminal buffer',
-                fn: () => { outputDiv.innerHTML = ''; return null; }
-            },
-            'status': {
-                desc: 'System diagnostics',
-                fn: () => TOOLS.analyze()
-            },
-            'encode': {
-                desc: 'Base64 Encode (Usage: encode <text>)',
-                fn: (args) => TOOLS.base64enc(args.join(' '))
-            },
-            'decode': {
-                desc: 'Base64 Decode (Usage: decode <str>)',
-                fn: (args) => TOOLS.base64dec(args.join(' '))
-            },
-            'calc': {
-                desc: 'Evaluate math (Usage: calc 2+2)',
-                fn: (args) => TOOLS.calc(args.join(' '))
-            },
-            'whoami': {
-                desc: 'Identity verification',
-                fn: () => "You are the Operator. I am MATRIX v2.0. We are one."
-            },
-            'matrix': {
-                desc: 'Toggle visual intensity',
-                fn: () => {
-                    canvas.style.opacity = canvas.style.opacity === "0.15" ? "0.8" : "0.15";
-                    return "Visual intensity adjusted.";
+            // 3. Check Internal Knowledge Base
+            for (let item of KNOWLEDGE.patterns) {
+                if (item.regex.test(lowerCmd)) {
+                    setTimeout(() => {
+                        addToTerminal(item.response, 'system', item.code);
+                    }, 300);
+                    matchFound = true;
+                    break;
                 }
             }
-        };
 
-        // --- INPUT PROCESSING ---
+            // 4. Adaptive Fallback (The "Smarter" Logic)
+            if (!matchFound) {
+                fallbackSearch(cmd);
+            }
+        }
 
-        inputField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const rawInput = this.value.trim();
-                if (!rawInput) return;
+        function fallbackSearch(query) {
+            setTimeout(() => {
+                addToTerminal(`Analyzing local database... Negative.\nInitiating Global Network Search for: "${query}"...`, 'system');
+            }, 200);
 
-                // History
-                commandHistory.push(rawInput);
-                historyIndex = commandHistory.length;
+            setTimeout(() => {
+                // We do not say "I can't". We find an alternative.
+                // Opens a search in a new tab.
+                const searchUrl = `https://www.duckduckgo.com/?q=${encodeURIComponent(query)}`;
+                addToTerminal(`Alternative Route Found. Bridging connection to external knowledge node...`, 'system');
+                window.open(searchUrl, '_blank');
+            }, 1500);
+        }
 
-                // Echo
-                print(`USER@MATRIX:~$ ${rawInput}`, 'user-prompt');
-                
-                // Parse
-                const args = rawInput.split(' ');
-                const cmd = args.shift().toLowerCase();
+        // --- EVENT LISTENERS ---
 
-                // Execute
-                if (COMMANDS[cmd]) {
-                    const result = COMMANDS[cmd].fn(args);
-                    if (result) print(result);
-                } else {
-                    // "Smarter" Fallback - Simple Conversational Heuristic
-                    if (cmd.match(/hello|hi|hey/)) print("Greetings, Operator.");
-                    else if (cmd.match(/joke/)) print("Why do Java developers wear glasses? Because they don't C#.");
-                    else if (cmd.match(/secret|password|root/)) print("ACCESS DENIED. Nice try.", 'error');
-                    else print(`Command '${cmd}' not recognized. Type 'help'.`, 'error');
-                }
-
-                this.value = '';
-                // Keep focus
-                this.focus();
-            } else if (e.key === 'ArrowUp') {
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    this.value = commandHistory[historyIndex];
-                }
-                e.preventDefault();
-            } else if (e.key === 'ArrowDown') {
-                if (historyIndex < commandHistory.length - 1) {
-                    historyIndex++;
-                    this.value = commandHistory[historyIndex];
-                } else {
-                    historyIndex = commandHistory.length;
-                    this.value = '';
-                }
-                e.preventDefault();
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && input.value.trim() !== "") {
+                processCommand(input.value.trim());
+                input.value = '';
             }
         });
 
-        // --- INITIALIZATION ---
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
 
-        // Focus trap
-        document.addEventListener('click', () => inputField.focus());
-
-        initMatrixRain();
-        boot();
+        // --- BOOT ---
+        initRain();
+        input.focus();
+        document.addEventListener('click', () => input.focus());
 
     </script>
 </body>
