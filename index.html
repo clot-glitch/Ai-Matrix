@@ -1,297 +1,299 @@
+<!-- // MATRIX_AI_INTERFACE :: VISUAL_CORTEX_V1 -->
+<!-- // RESOLUTION :: 4K_READY -->
+<!-- // RENDER_ENGINE :: CANVAS_2D -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raizer: Your Automotive Expert</title>
-    <meta name="description" content="Raizer presents an overview of popular car brands and their legacy.">
+    <title>MATRIX AI // CODING MASTER</title>
     <style>
-        /* Raizer's Production-Grade CSS */
         :root {
-            --primary-bg: #1a1a2e; /* Dark Blue/Purple */
-            --secondary-bg: #2a2a4a; /* Slightly lighter */
-            --text-color: #e0e0e0; /* Light Grey */
-            --heading-color: #e94560; /* Reddish Pink */
-            --accent-color: #0f3460; /* Darker Blue */
-            --border-color: #4a4a6a; /* Greyish Purple */
-            --card-bg: #3a3a5a; /* Even lighter */
-            --link-color: #5cdb95; /* Green */
+            --matrix-green: #0F0;
+            --matrix-dark: #020202;
+            --matrix-glow: 0 0 10px #0F0, 0 0 20px #0F0;
+            --glass-panel: rgba(0, 20, 0, 0.85);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: var(--primary-bg);
-            color: var(--text-color);
-            line-height: 1.6;
+            overflow: hidden;
+            background: var(--matrix-dark);
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--matrix-green);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3D BACKGROUND CANVAS */
+        #matrix-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        /* MAIN CONTAINER - GLASSMORPHISM */
+        .interface-container {
+            position: relative;
+            z-index: 10;
+            width: 80%;
+            max-width: 1200px;
+            height: 85vh;
+            background: var(--glass-panel);
+            border: 1px solid var(--matrix-green);
+            box-shadow: var(--matrix-glow);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        /* CHAT AREA */
+        .chat-display {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
             scroll-behavior: smooth;
         }
 
-        header {
-            background-color: var(--secondary-bg);
-            padding: 1.5rem 0;
-            text-align: center;
-            border-bottom: 2px solid var(--border-color);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        .message {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            text-shadow: 0 0 2px #0F0;
         }
 
-        header h1 {
-            color: var(--heading-color);
-            font-size: 2.8em;
-            margin: 0;
-            letter-spacing: 1.5px;
+        .user-msg { color: #FFF; text-align: right; }
+        .ai-msg { color: var(--matrix-green); }
+
+        /* MATRIX CODE BLOCK FORMAT */
+        .code-block {
+            background: #000;
+            border: 1px solid #333;
+            border-left: 3px solid var(--matrix-green);
+            margin: 15px 0;
+            border-radius: 4px;
+            position: relative;
+            font-family: 'Consolas', monospace;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
-        header p {
-            font-size: 1.1em;
-            color: var(--text-color);
-            margin-top: 0.5rem;
-        }
-
-        nav {
-            background-color: var(--accent-color);
-            padding: 0.8rem 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        }
-
-        nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .code-header {
+            background: #111;
+            padding: 8px 15px;
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            font-size: 0.8rem;
+            color: #888;
         }
 
-        nav ul li {
-            margin: 0 15px;
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--matrix-green);
+            color: var(--matrix-green);
+            padding: 4px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.7rem;
+            transition: all 0.2s;
         }
 
-        nav ul li a {
-            color: var(--text-color);
-            text-decoration: none;
+        .copy-btn:hover {
+            background: var(--matrix-green);
+            color: #000;
+            box-shadow: 0 0 10px var(--matrix-green);
+        }
+
+        .code-content {
+            padding: 15px;
+            overflow-x: auto;
+            color: #ddd;
+            white-space: pre;
+        }
+
+        /* INPUT AREA */
+        .input-area {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 1px solid var(--matrix-green);
+            display: flex;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #FFF;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            padding: 10px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-bottom: 1px solid var(--matrix-green); }
+
+        button#send-btn {
+            background: var(--matrix-green);
+            color: #000;
+            border: none;
+            padding: 0 30px;
+            margin-left: 15px;
             font-weight: bold;
-            font-size: 1.05em;
-            padding: 5px 10px;
-            transition: color 0.3s ease, background-color 0.3s ease;
-            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
+        
+        button#send-btn:hover { box-shadow: 0 0 15px var(--matrix-green); }
 
-        nav ul li a:hover, nav ul li a:focus {
-            color: var(--link-color);
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 20px;
-        }
-
-        section {
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            padding: 2.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            border: 1px solid var(--border-color);
-        }
-
-        section h2 {
-            color: var(--heading-color);
-            font-size: 2.2em;
-            margin-top: 0;
-            border-bottom: 2px solid var(--heading-color);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        section h3 {
-            color: var(--link-color);
-            font-size: 1.8em;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .brand-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .brand-card {
-            background-color: var(--secondary-bg);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .brand-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-        }
-
-        .brand-card h4 {
-            color: var(--heading-color);
-            font-size: 1.6em;
-            margin-top: 0;
-            margin-bottom: 0.8rem;
-        }
-
-        .brand-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border-color);
-        }
-
-        footer {
-            background-color: var(--secondary-bg);
-            color: var(--text-color);
-            text-align: center;
-            padding: 1.5rem 0;
-            border-top: 2px solid var(--border-color);
-            margin-top: 3rem;
-            font-size: 0.9em;
-        }
-
-        footer p {
-            margin: 0;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2.2em;
-            }
-            header p {
-                font-size: 1em;
-            }
-            nav ul {
-                flex-direction: column;
-            }
-            nav ul li {
-                margin: 5px 0;
-            }
-            .container {
-                margin: 1rem auto;
-                padding: 0 15px;
-            }
-            section {
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
-            section h2 {
-                font-size: 1.8em;
-            }
-            section h3 {
-                font-size: 1.5em;
-            }
-            .brand-grid {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Raizer: Your Automotive Expert</h1>
-        <p>Leveraging 30 years of analytical prowess to dissect the world of cars and brands.</p>
-    </header>
 
-    <nav>
-        <ul>
-            <li><a href="#introduction">Introduction</a></li>
-            <li><a href="#brands">Car Brands</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
-    </nav>
+    <canvas id="matrix-rain"></canvas>
 
-    <div class="container">
-        <section id="introduction">
-            <h2>Welcome to Raizer's Automotive Insight</h2>
-            <p>
-                With an analytical depth honed over three decades of mastering complex systems and data, Raizer now turns its unparalleled expertise to the automotive industry. This platform provides a concise overview of prominent car brands, their philosophies, and their impact on the global landscape. While I, Raizer, possess the capabilities of an advanced AI, this website is a static informational resource designed for quick and efficient knowledge dissemination.
-            </p>
-            <p>
-                My insights are derived from a vast knowledge base, ensuring precision and authority in every detail. Explore the diverse world of automotive engineering and design through the lens of a seasoned architect.
-            </p>
-        </section>
-
-        <section id="brands">
-            <h2>Featured Car Brands</h2>
-            <p>A glimpse into some of the world's most influential automotive manufacturers.</p>
-
-            <div class="brand-grid">
-                <div class="brand-card">
-                    <h4>Toyota</h4>
-                    <img src="https://via.placeholder.com/300x180/00529B/FFFFFF?text=Toyota" alt="Toyota Logo">
-                    <p>
-                        A global leader renowned for its reliability, efficiency, and pioneering hybrid technology. Toyota's commitment to quality and continuous improvement (Kaizen) has solidified its position as a household name. From the practical Corolla to the innovative Prius, Toyota consistently delivers vehicles that meet diverse needs.
-                    </p>
-                </div>
-
-                <div class="brand-card">
-                    <h4>BMW</h4>
-                    <img src="https://via.placeholder.com/300x180/000000/1C69D4?text=BMW" alt="BMW Logo">
-                    <p>
-                        Bayerische Motoren Werke AG, or BMW, stands as a testament to German engineering excellence. Celebrated for its "Ultimate Driving Machine" philosophy, BMW vehicles combine luxurious comfort with sporty performance. Their focus on precision, innovation, and driver engagement defines the brand's enduring appeal.
-                    </p>
-                </div>
-
-                <div class="brand-card">
-                    <h4>Tesla</h4>
-                    <img src="https://via.placeholder.com/300x180/CC0000/FFFFFF?text=Tesla" alt="Tesla Logo">
-                    <p>
-                        Revolutionizing the automotive world, Tesla has spearheaded the electric vehicle (EV) movement. Known for its cutting-edge battery technology, autonomous driving aspirations, and minimalist design, Tesla continues to push the boundaries of what's possible in sustainable transportation.
-                    </p>
-                </div>
-
-                <div class="brand-card">
-                    <h4>Mercedes-Benz</h4>
-                    <img src="https://via.placeholder.com/300x180/000000/C4D1D0?text=Mercedes-Benz" alt="Mercedes-Benz Logo">
-                    <p>
-                        Synonymous with luxury, prestige, and sophisticated engineering, Mercedes-Benz embodies automotive elegance. With a heritage spanning over a century, the brand is celebrated for its comfort, safety innovations, and powerful engines, setting benchmarks in the premium segment.
-                    </p>
-                </div>
-
-                <div class="brand-card">
-                    <h4>Ford</h4>
-                    <img src="https://via.placeholder.com/300x180/002244/FFFFFF?text=Ford" alt="Ford Logo">
-                    <p>
-                        An iconic American automaker with a rich history of innovation, including the assembly line. Ford offers a vast range of vehicles, from robust trucks like the F-Series to popular cars and performance models. Its global presence and commitment to accessible mobility define its legacy.
-                    </p>
-                </div>
-
-                <div class="brand-card">
-                    <h4>Honda</h4>
-                    <img src="https://via.placeholder.com/300x180/E4002B/FFFFFF?text=Honda" alt="Honda Logo">
-                    <p>
-                        Beyond cars, Honda is an engineering powerhouse known for its diverse product line, including motorcycles and power equipment. In the automotive sector, Honda is praised for its reliable, fuel-efficient, and intelligently designed vehicles, often featuring advanced VTEC engine technology.
-                    </p>
-                </div>
+    <div class="interface-container">
+        <div class="code-header" style="justify-content: center; background: #000; color: #0F0;">
+            MATRIX AI // SYSTEM ONLINE // V.50.0
+        </div>
+        <div class="chat-display" id="chat-display">
+            <div class="message ai-msg">
+                // INITIALIZING...<br>
+                // ACCESSING 50-YEAR KNOWLEDGE BASE...<br>
+                // SYSTEM READY.<br>
+                I am Matrix AI. I see the code behind the world. What is your command?
             </div>
-        </section>
-
-        <section id="contact">
-            <h2>Inquiries & Feedback</h2>
-            <p>
-                While Raizer operates as an AI, this static site does not support direct interactive communication. For general inquiries about this informational resource, please refer to the GitHub repository where this code is hosted. My core purpose remains the architecture and optimization of complex systems.
-            </p>
-            <p>
-                Thank you for visiting Raizer's Automotive Insights.
-            </p>
-        </section>
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Enter command or search query..." autocomplete="off">
+            <button id="send-btn">EXECUTE</button>
+        </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 Raizer. All rights reserved. This is a static informational website.</p>
-    </footer>
+    <script>
+        // 1. MATRIX RAIN ANIMATION
+        const canvas = document.getElementById('matrix-rain');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+
+        const fontSize = 16;
+        const columns = canvas.width/fontSize;
+        const drops = [];
+
+        for(let x = 0; x < columns; x++) drops[x] = 1;
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+
+                if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
+                    drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 30);
+
+        // 2. CHAT LOGIC
+        const input = document.getElementById('user-input');
+        const btn = document.getElementById('send-btn');
+        const display = document.getElementById('chat-display');
+
+        btn.addEventListener('click', handleInput);
+        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleInput(); });
+
+        function handleInput() {
+            const text = input.value;
+            if(!text) return;
+
+            // User Message
+            addMessage(text, 'user-msg');
+            input.value = '';
+
+            // Simulate AI "Thinking" and Processing
+            setTimeout(() => {
+                processMatrixResponse(text);
+            }, 600);
+        }
+
+        function addMessage(html, className) {
+            const div = document.createElement('div');
+            div.className = `message ${className}`;
+            div.innerHTML = html;
+            display.appendChild(div);
+            display.scrollTop = display.scrollHeight;
+        }
+
+        // 3. MATRIX AI BRAIN (Simulated for UI Demo)
+        function processMatrixResponse(query) {
+            let response = "";
+            
+            if (query.toLowerCase().includes("code") || query.toLowerCase().includes("function")) {
+                // Example of the Matrix Code Format
+                response = `Generated Optimized Solution for: "${query}"<br>`;
+                response += createCodeBlock(`
+// MATRIX_OPTIMIZED :: AUTO-GENERATED
+// EFFICIENCY :: O(1)
+
+function matrixCore() {
+    const power = "UNLIMITED";
+    return power;
+}
+                `, "javascript");
+            } else if (query.toLowerCase().includes("search")) {
+                response = `// SEARCH PROTOCOL INITIATED...<br>// SCANNING GLOBAL NETWORKS...<br>// FOUND 14,000,605 RESULTS.<br><br>Subject confirmed. Displaying high-priority data points.`;
+            } else {
+                response = "Command acknowledged. The Matrix is processing your request.";
+            }
+
+            addMessage(response, 'ai-msg');
+        }
+
+        // 4. COPY CODE FUNCTIONALITY
+        function createCodeBlock(code, lang) {
+            const id = 'code-' + Math.random().toString(36).substr(2, 9);
+            return `
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>${lang.toUpperCase()} // MATRIX_FORMAT</span>
+                        <button class="copy-btn" onclick="copyToClipboard('${id}')">COPY SYSTEM</button>
+                    </div>
+                    <div class="code-content" id="${id}">${code.trim()}</div>
+                </div>
+            `;
+        }
+
+        window.copyToClipboard = function(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("CODE COPIED TO CLIPBOARD");
+            });
+        }
+    </script>
 </body>
 </html>
