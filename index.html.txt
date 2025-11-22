@@ -1,0 +1,118 @@
+<script>
+        // MATRIX-Ω :: FRONTEND_CONTROLLER_V2
+        // CONNECTIVITY :: LOCALHOST:5000
+        
+        const canvas = document.getElementById('matrix-rain');
+        const ctx = canvas.getContext('2d');
+        const input = document.getElementById('user-input');
+        const btn = document.getElementById('send-btn');
+        const display = document.getElementById('chat-display');
+
+        // 1. VISUALIZATION ENGINE (UNCHANGED - PERFECTION RETAINED)
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = '01XYZEQKΩ'; 
+        const drops = Array(Math.floor(canvas.width/16)).fill(1);
+
+        function drawRain() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = '16px monospace';
+            
+            drops.forEach((y, i) => {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i*16, y*16);
+                if(y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawRain, 30);
+
+        // 2. COMMUNICATION PROTOCOL (THE NEW BRIDGE)
+        btn.addEventListener('click', transmitSignal);
+        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') transmitSignal(); });
+
+        async function transmitSignal() {
+            const text = input.value.trim();
+            if(!text) return;
+
+            // Render User Command
+            addMessage(`>> ${text}`, 'user-msg');
+            input.value = '';
+            
+            // Show Processing State
+            const loadingId = addMessage("Analyzing...", 'ai-msg');
+
+            try {
+                // THE HANDSHAKE WITH PYTHON
+                const response = await fetch('http://127.0.0.1:5000/api/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: text })
+                });
+
+                const data = await response.json();
+                
+                // Remove Loading Text
+                document.getElementById(loadingId).remove();
+                
+                // Render Matrix Intelligence
+                if (data.type === 'CODE') {
+                    addCodeBlock(data.payload, data.language);
+                } else {
+                    addMessage(formatOutput(data.payload), 'ai-msg');
+                }
+
+            } catch (error) {
+                document.getElementById(loadingId).innerHTML = "// CRITICAL ERROR :: SERVER_OFFLINE<br>// REBOOT PYTHON CORE.";
+            }
+        }
+
+        // 3. DOM MANIPULATION UTILITIES
+        function addMessage(html, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.id = 'msg-' + Date.now();
+            div.innerHTML = html;
+            display.appendChild(div);
+            display.scrollTop = display.scrollHeight;
+            return div.id;
+        }
+
+        function formatOutput(text) {
+            return text.replace(/\n/g, '<br>').replace(/\/\/ /g, '<span style="opacity:0.7">// </span>');
+        }
+
+        function addCodeBlock(code, lang) {
+            const id = 'code-' + Math.random().toString(36).substr(2, 9);
+            const block = `
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>${lang.toUpperCase()} // MATRIX_Ω_OPTIMIZED</span>
+                        <button class="copy-btn" onclick="copySystem('${id}')">COPY SYSTEM</button>
+                    </div>
+                    <div class="code-content" id="${id}">${escapeHtml(code)}</div>
+                </div>
+            `;
+            const div = document.createElement('div');
+            div.innerHTML = block;
+            display.appendChild(div);
+            display.scrollTop = display.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.copySystem = function(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+            alert("LOGIC EXTRACTED.");
+        }
+    </script>
