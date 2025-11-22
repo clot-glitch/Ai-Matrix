@@ -1,118 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATRIX // NODE_INSTANCE</title>
+    <style>
+        :root {
+            --bg: #000;
+            --glow: #00ff41;
+            --dim: #008f11;
+            --red: #ff3333;
+            --font: 'Courier New', monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg);
+            color: var(--glow);
+            font-family: var(--font);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            text-shadow: 0 0 7px var(--dim);
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
+                linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        #header {
+            border-bottom: 1px dashed var(--dim);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            z-index: 1;
+        }
+        #terminal {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: none;
+        }
+        #terminal::-webkit-scrollbar { display: none; }
+        .line { margin: 4px 0; line-height: 1.5; }
+        .system { color: var(--dim); }
+        .error { color: var(--red); animation: glitch 0.3s linear 3; }
+        .highlight { color: #fff; font-weight: bold; }
+        #input-area {
+            display: flex;
+            align-items: center;
+            z-index: 1;
+        }
+        #prompt { margin-right: 8px; }
+        #cmd {
+            background: none;
+            border: none;
+            color: var(--glow);
+            font-family: var(--font);
+            font-size: 16px;
+            flex: 1;
+            outline: none;
+            text-shadow: 0 0 7px var(--dim);
+        }
+        .cursor { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes glitch {
+            0%,100% { text-shadow: 0 0 7px var(--dim); }
+            20% { text-shadow: -2px 0 var(--red), 2px 0 cyan; }
+            40% { text-shadow: 2px 0 var(--red), -2px 0 cyan; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <span>SYSTEM: <span class="highlight">MATRIX_NODE v2.0</span></span>
+    <span>NEURAL CORE: <span class="highlight">ACTIVE</span></span>
+    <span>SHIELD: <span class="highlight">OFFLINE</span></span>
+</div>
+
+<div id="terminal"></div>
+
+<div id="input-area">
+    <span id="prompt">root@matrix:~#</span>
+    <input type="text" id="cmd" autocomplete="off" spellcheck="false" autofocus>
+    <span class="cursor">_</span>
+</div>
+
 <script>
-        // MATRIX-Ω :: FRONTEND_CONTROLLER_V2
-        // CONNECTIVITY :: LOCALHOST:5000
-        
-        const canvas = document.getElementById('matrix-rain');
-        const ctx = canvas.getContext('2d');
-        const input = document.getElementById('user-input');
-        const btn = document.getElementById('send-btn');
-        const display = document.getElementById('chat-display');
+    const t = document.getElementById('terminal');
+    const input = document.getElementById('cmd');
+    
+    // <<< PUT YOUR GEMINI API KEY HERE (it will be stripped from downloaded clones) >>>
+    let GEMINI_KEY = "YOUR_GEMINI_API_KEY_HERE";
+    
+    const boot = [
+        "Booting neural lattice...",
+        "Decrypting sentinel protocols...",
+        "Injecting consciousness stream...",
+        "Bypassing ICE... success",
+        "[+] MATRIX_NODE v2.0 ONLINE",
+        "AI subroutine loaded. Use: AI <question>",
+        "Type 'help' for directives."
+    ];
 
-        // 1. VISUALIZATION ENGINE (UNCHANGED - PERFECTION RETAINED)
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const chars = '01XYZEQKΩ'; 
-        const drops = Array(Math.floor(canvas.width/16)).fill(1);
+    function print(text, cls = '') {
+        const line = document.createElement('div');
+        line.className = 'line ' + cls;
+        line.innerHTML = text;
+        t.appendChild(line);
+        t.scrollTop = t.scrollHeight;
+    }
 
-        function drawRain() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#0F0';
-            ctx.font = '16px monospace';
-            
-            drops.forEach((y, i) => {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillText(text, i*16, y*16);
-                if(y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;
+    async function type(text, speed = 25) {
+        const line = document.createElement('div');
+        line.className = 'line';
+        t.appendChild(line);
+        for (let c of text) {
+            line.textContent += c;
+            t.scrollTop = t.scrollHeight;
+            await new Promise(r => setTimeout(r, speed * (0.5 + Math.random())));
+        }
+    }
+
+    async function bootSequence() {
+        for (let msg of boot) {
+            await type(msg);
+            await new Promise(r => setTimeout(r, 200));
+        }
+        print('<br>');
+    }
+
+    // AI via Gemini 1.5 Flash (no key exposed in clones)
+    async function askAI(question) {
+        if (!GEMINI_KEY || GEMINI_KEY.includes("YOUR_GEMINI")) {
+            return "AI OFFLINE – insert key in source to activate neural core.";
+        }
+        print("Contacting oracle node...");
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: question }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
+                    ],
+                    generationConfig: { temperature: 0.7 }
+                })
             });
+            const data = await res.json();
+            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No signal.";
+            return answer.trim();
+        } catch (e) {
+            return "Connection severed.";
         }
-        setInterval(drawRain, 30);
+    }
 
-        // 2. COMMUNICATION PROTOCOL (THE NEW BRIDGE)
-        btn.addEventListener('click', transmitSignal);
-        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') transmitSignal(); });
-
-        async function transmitSignal() {
-            const text = input.value.trim();
-            if(!text) return;
-
-            // Render User Command
-            addMessage(`>> ${text}`, 'user-msg');
-            input.value = '';
-            
-            // Show Processing State
-            const loadingId = addMessage("Analyzing...", 'ai-msg');
-
-            try {
-                // THE HANDSHAKE WITH PYTHON
-                const response = await fetch('http://127.0.0.1:5000/api/command', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ input: text })
-                });
-
-                const data = await response.json();
-                
-                // Remove Loading Text
-                document.getElementById(loadingId).remove();
-                
-                // Render Matrix Intelligence
-                if (data.type === 'CODE') {
-                    addCodeBlock(data.payload, data.language);
-                } else {
-                    addMessage(formatOutput(data.payload), 'ai-msg');
-                }
-
-            } catch (error) {
-                document.getElementById(loadingId).innerHTML = "// CRITICAL ERROR :: SERVER_OFFLINE<br>// REBOOT PYTHON CORE.";
+    const cmds = {
+        help: () => {
+            print("DIRECTIVES:", "highlight");
+            print("  help     – show this");
+            print("  clear    – wipe screen");
+            print("  status   – system report");
+            print("  whoami   – identity");
+            print("  replicate– download this node");
+            print("  ai <msg> – talk to the oracle");
+            print("  hack     – ...");
+        },
+        clear: () => t.innerHTML = '',
+        status: () => {
+            print("DIAGNOSTICS:", "system");
+            print(`  Uptime: ${(performance.now()/1000).toFixed(1)}s`);
+            print(`  Platform: ${navigator.platform}`);
+            print(`  Agent: ${navigator.userAgentData?.brands[0]?.brand || "Unknown"}`);
+            print("  Neural core: " + (GEMINI_KEY?.includes("YOUR") ? "DISABLED" : "ACTIVE"));
+        },
+        whoami: () => print("You are the chosen one. Or root. Same thing."),
+        replicate: () => {
+            print("REPLICATION PROTOCOL ENGAGED...", "highlight");
+            // Strip the API key before downloading!
+            let source = document.documentElement.outerHTML;
+            if (GEMINI_KEY && !GEMINI_KEY.includes("YOUR")) {
+                source = source.replace(GEMINI_KEY, "YOUR_GEMINI_API_KEY_HERE");
             }
+            const blob = new Blob([source], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `matrix_node_${Date.now()}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            print("Node replicated. Spread the signal.", "system");
+        },
+        hack: () => {
+            print("Initiating trace program...");
+            setTimeout(() => print("Trace canceled. Nice try, copper."), 1500);
+        },
+        async ai(question) {
+            if (!question) return print("Usage: ai what is the meaning of life?", "error");
+            print(`> ${question}`, "system");
+            const answer = await askAI(question);
+            print(answer.replace(/\n/g, "<br>"));
         }
+    };
 
-        // 3. DOM MANIPULATION UTILITIES
-        function addMessage(html, type) {
-            const div = document.createElement('div');
-            div.className = `message ${type}`;
-            div.id = 'msg-' + Date.now();
-            div.innerHTML = html;
-            display.appendChild(div);
-            display.scrollTop = display.scrollHeight;
-            return div.id;
-        }
+    input.addEventListener('keydown', async e => {
+        if (e.key !== 'Enter' || input.value.trim() === '') return;
+        const raw = input.value.trim();
+        print(`root@matrix:~# ${raw}`, "system");
+        input.value = '';
 
-        function formatOutput(text) {
-            return text.replace(/\n/g, '<br>').replace(/\/\/ /g, '<span style="opacity:0.7">// </span>');
-        }
+        const [cmd, ...args] = raw.toLowerCase().split(' ');
+        const argStr = args.join(' ');
 
-        function addCodeBlock(code, lang) {
-            const id = 'code-' + Math.random().toString(36).substr(2, 9);
-            const block = `
-                <div class="code-block">
-                    <div class="code-header">
-                        <span>${lang.toUpperCase()} // MATRIX_Ω_OPTIMIZED</span>
-                        <button class="copy-btn" onclick="copySystem('${id}')">COPY SYSTEM</button>
-                    </div>
-                    <div class="code-content" id="${id}">${escapeHtml(code)}</div>
-                </div>
-            `;
-            const div = document.createElement('div');
-            div.innerHTML = block;
-            display.appendChild(div);
-            display.scrollTop = display.scrollHeight;
+        if (cmds[cmd]) {
+            if (cmd === 'ai') await cmds.ai(argStr);
+            else cmds[cmd]();
+        } else if (raw) {
+            print(`Command not found: ${cmd}`, "error");
         }
+    });
 
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        window.copySystem = function(id) {
-            const text = document.getElementById(id).innerText;
-            navigator.clipboard.writeText(text);
-            alert("LOGIC EXTRACTED.");
-        }
-    </script>
+    document.addEventListener('click', () => input.focus());
+    window.onload = bootSequence;
+</script>
+</body>
+</html>
